@@ -1,15 +1,16 @@
 ﻿using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Main")]
-[assembly: AssemblyDescription("A toolbox to ease unit testing of Z80 code together with Z80.NET")]
+[assembly: AssemblyTitle("Tests")]
+[assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Sunhotels")]
-[assembly: AssemblyProduct("Main")]
-[assembly: AssemblyCopyright("Copyright © Konamiman 2015")]
+[assembly: AssemblyProduct("Tests")]
+[assembly: AssemblyCopyright("Copyright © Sunhotels 2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -19,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("40f0f95e-2f99-441a-86dd-f12923bfab66")]
+[assembly: Guid("1c25a8da-fdcf-43c9-b6aa-0a0438e8f9f5")]
 
 // Version information for an assembly consists of the following four values:
 //

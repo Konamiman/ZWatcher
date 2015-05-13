@@ -42,8 +42,8 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="Z80dotNet, Version=1.0.4.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Z80dotNet\Main\bin\Release\Z80dotNet.dll</HintPath>
+      <HintPath>..\packages\Z80dotNet.1.0.4.0\lib\net40-Client\Z80dotNet.dll</HintPath>
+      <Private>True</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>

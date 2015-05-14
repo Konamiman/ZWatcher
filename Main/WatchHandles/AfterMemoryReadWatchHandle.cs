@@ -28,6 +28,17 @@ namespace Konamiman.ZTest.WatchHandles
         }
 
         /// <summary>
+        /// Sets the display name for the enclosed watch.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public AfterMemoryReadWatchHandle Named(string name)
+        {
+            SetName(name);
+            return this;
+        }
+
+        /// <summary>
         /// Tells that the specified value must be delivered to the processor
         /// instead of the value actually read from memory.
         /// </summary>

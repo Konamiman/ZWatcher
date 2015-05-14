@@ -11,5 +11,9 @@ namespace Konamiman.ZTest.Watches
         int TimesReached { get; set; }
 
         Func<T, bool> IsMatch { get; }
+
+        long MinimumReachesRequired { get; set; }
+
+        long MaximumReachesAllowed { get; set; }
     }
 }

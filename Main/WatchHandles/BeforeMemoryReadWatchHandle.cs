@@ -28,6 +28,17 @@ namespace Konamiman.ZTest.WatchHandles
         }
 
         /// <summary>
+        /// Sets the display name for the enclosed watch.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public BeforeMemoryReadWatchHandle Named(string name)
+        {
+            SetName(name);
+            return this;
+        }
+
+        /// <summary>
         /// Tells that memory or port access must be suppressed, so that no value is actually read,
         /// and the specified value must be delivered to the processor instead.
         /// </summary>

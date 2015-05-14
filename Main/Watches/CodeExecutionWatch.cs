@@ -5,16 +5,11 @@ using Konamiman.ZTest.Contexts;
 namespace Konamiman.ZTest.Watches
 {
     internal abstract class CodeExecutionWatch<T> 
-        : IWatch<T> where T : CodeExecutionContext
+        : Watch<T> where T : CodeExecutionContext
     {
-        public IEnumerable<Action<T>> Callbacks { get; }
-        public int TimesReached { get; set; }
-        public Func<T, bool> IsMatch { get; }
-
-        internal CodeExecutionWatch(Func<T, bool> isMatch, IEnumerable<Action<T>> callbacks)
+        public CodeExecutionWatch(Func<T, bool> isMatch, IEnumerable<Action<T>> callbacks)
+            : base(isMatch, callbacks)
         {
-            this.Callbacks = callbacks;
-            this.IsMatch = isMatch;
         }
     }
 }

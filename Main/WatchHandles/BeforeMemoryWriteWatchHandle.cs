@@ -28,6 +28,17 @@ namespace Konamiman.ZTest.WatchHandles
         }
 
         /// <summary>
+        /// Sets the display name for the enclosed watch.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public BeforeMemoryWriteWatchHandle Named(string name)
+        {
+            SetName(name);
+            return this;
+        }
+
+        /// <summary>
         /// Tells that memory access must be suppressed, so that no value is
         /// actually written to memory.
         /// </summary>

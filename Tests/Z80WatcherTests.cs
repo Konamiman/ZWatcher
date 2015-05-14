@@ -112,6 +112,7 @@ namespace Konamiman.ZTests.Tests
         {
             Sut
                 .BeforeExecuting(context => context.Address == 0x00A2)
+                .Named("TalYCual")
                 .Do(context => Debug.Write(Encoding.ASCII.GetString(new[] {context.Z80.Registers.A})))
                 .ThenReturn();
 

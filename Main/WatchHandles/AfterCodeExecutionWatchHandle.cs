@@ -29,6 +29,17 @@ namespace Konamiman.ZTest.WatchHandles
         }
 
         /// <summary>
+        /// Sets the display name for the enclosed watch.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public AfterCodeExecutionWatchHandle Named(string name)
+        {
+            SetName(name);
+            return this;
+        }
+
+        /// <summary>
         /// Tells that the processor execution must stop after the current instruction finishes its execution.
         /// </summary>
         /// <returns></returns>

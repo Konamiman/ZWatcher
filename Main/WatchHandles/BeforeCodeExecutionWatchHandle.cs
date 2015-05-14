@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Configuration;
 using Konamiman.Z80dotNet;
 using Konamiman.ZTest.Contexts;
 using Konamiman.ZTest.Watches;
@@ -26,6 +27,17 @@ namespace Konamiman.ZTest.WatchHandles
         public BeforeCodeExecutionWatchHandle Do(Action<BeforeCodeExecutionContext> callback)
         {
             Callbacks.Add(callback);
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the display name for the enclosed watch.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public BeforeCodeExecutionWatchHandle Named(string name)
+        {
+            SetName(name);
             return this;
         }
 

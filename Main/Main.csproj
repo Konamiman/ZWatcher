@@ -54,6 +54,7 @@
     <Compile Include="Watches\BeforeMemoryReadWatch.cs" />
     <Compile Include="Watches\CodeExecutionWatch.cs" />
     <Compile Include="Watches\IWatch.cs" />
+    <Compile Include="Watches\Watch.cs" />
     <Compile Include="WatchHandles\AfterCodeExecutionWatchHandle.cs" />
     <Compile Include="WatchHandles\BeforeMemoryWriteWatchHandle.cs" />
     <Compile Include="WatchHandles\AfterMemoryWriteWatchHandle.cs" />
@@ -67,6 +68,7 @@
     <Compile Include="Watches\MemoryAccessWatch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="WatchHandles\IWatchHandle.cs" />
+    <Compile Include="WatchHandles\WatchHandle.cs" />
     <Compile Include="Z80Watcher.cs" />
   </ItemGroup>
   <ItemGroup>

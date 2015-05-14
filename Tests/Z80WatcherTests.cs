@@ -62,14 +62,16 @@ namespace Konamiman.ZTests.Tests
         {
             Sut
                 .BeforeExecuting()
-                .Do(context => Debug.WriteLine($"Before: {context.Address:X}"));
+                .Do(context => Debug.WriteLine($"Before: {context.Address:X}, times: {context.TimesReached}"));
 
             Sut
                 .AfterExecuting()
-                .Do(context => Debug.WriteLine($"After:  {context.Address:X}"));
+                .Do(context => Debug.WriteLine($"After:  {context.Address:X}, times: {context.TimesReached}"));
 
             Sut
                 .BeforeExecuting(context => context.Address == 0x00A2)
+                .Do(context => Debug.WriteLine($"--- 00A2: {context.TimesReached} times"))
+                .Do(context => { if(context.TimesReached > 3) context.TimesReached = 0; })
                 .ThenReturn();
 
             Z80.Memory.SetContents(0x0100, helloWorld);

@@ -4,9 +4,11 @@ using Konamiman.ZTest.Contexts;
 
 namespace Konamiman.ZTest.Watches
 {
-    public interface IWatch<in T> where T : IContext
+    internal interface IWatch<in T> where T : IContext
     {
         IEnumerable<Action<T>> Callbacks { get; }
+
+        int TimesReached { get; set; }
 
         Func<T, bool> IsMatch { get; }
     }

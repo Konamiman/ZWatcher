@@ -8,6 +8,7 @@ namespace Konamiman.ZTest.Contexts
     public abstract class MemoryAccessContext : IContext
     {
         public IZ80Processor Z80 { get; }
+        public int TimesReached { get; set; }
         public ushort Address { get; }
 
         internal MemoryAccessContext(IZ80Processor z80, ushort address)

@@ -369,8 +369,11 @@ namespace Konamiman.ZTest
             
             var matched = AfterCodeExecutionWatches.Where(w => w.IsMatch(context));
             foreach(var match in matched) {
+                match.TimesReached++;
+                context.TimesReached = match.TimesReached;
                 foreach(var callback in match.Callbacks) {
                     callback(context);
+                    match.TimesReached = context.TimesReached;
                     if(context.MustStop) {
                         e.ExecutionStopper.Stop();
                         return;
@@ -387,8 +390,11 @@ namespace Konamiman.ZTest
             
             var matched = BeforeCodeExecutionWatches.Where(w => w.IsMatch(context));
             foreach(var match in matched) {
+                match.TimesReached++;
+                context.TimesReached = match.TimesReached;
                 foreach(var callback in match.Callbacks) {
                     callback(context);
+                    match.TimesReached = context.TimesReached;
                 }
             }
         }
@@ -460,8 +466,11 @@ namespace Konamiman.ZTest
         {
             var matched = watches.Where(w => w.IsMatch(context));
             foreach(var match in matched) {
+                match.TimesReached++;
+                context.TimesReached = match.TimesReached;
                 foreach(var callback in match.Callbacks) {
                     callback(context);
+                    match.TimesReached = context.TimesReached;
                 }
             }
         }

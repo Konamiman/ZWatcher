@@ -8,6 +8,7 @@ namespace Konamiman.ZTest.Contexts
     public abstract class CodeExecutionContext : IContext
     {
         public IZ80Processor Z80 { get; }
+        public int TimesReached { get; set; }
 
         /// <summary>
         /// Memory address where the opcode (to be) executed is stored.

@@ -207,7 +207,7 @@ namespace Konamiman.ZTest
             }
         }
 
-        private void ProcessMemoryAccess<TWatch, TContext>(TContext context, IEnumerable<TWatch> watches)
+        private static void ProcessMemoryAccess<TWatch, TContext>(TContext context, IEnumerable<TWatch> watches)
             where TContext : MemoryAccessContext
             where TWatch : IWatch<TContext>
         {

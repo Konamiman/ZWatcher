@@ -84,12 +84,7 @@ namespace Konamiman.ZTests.Tests
         {
             Sut
                 .AfterExecutingAt(0x103)
-                .Do(context => context.RequestExecutionStop());
-
-            //Throws:
-            //Sut
-            //   .BeforeExecutingAt(0x103)
-            //   .Do(context => context.RequestExecutionStop());
+                .ThenStopExecution();
 
             Sut
                 .BeforeExecuting()
@@ -103,10 +98,61 @@ namespace Konamiman.ZTests.Tests
                 .BeforeExecuting(context => context.Address == 0x00A2)
                 .ThenReturn();
 
-            //Throws:
-            //Sut
-            //   .AfterExecuting(context => context.Address == 0x00A2)
-            //   .ThenReturn();
+            Z80.Memory.SetContents(0x0100, helloWorld);
+
+            Z80.Reset();
+            Z80.Registers.PC = 0x0100;
+            Z80.Continue();
+        }
+
+        [Test]
+        public void Changing_read_value_after()
+        {
+            Sut
+                .BeforeExecuting(context => context.Address == 0x00A2)
+                .Do(context => Debug.Write(Encoding.ASCII.GetString(new[] {context.Z80.Registers.A})))
+                .ThenReturn();
+
+            Sut
+                .AfterReadingMemory(context => context.Address >= 0x010C)
+                .ThenReplaceObtainedValueWith(context => (byte)(context.Value + 1));
+
+            Z80.Memory.SetContents(0x0100, helloWorld);
+
+            Z80.Reset();
+            Z80.Registers.PC = 0x0100;
+            Z80.Continue();
+        }
+
+        [Test]
+        public void Changing_read_value_before()
+        {
+            Sut
+                .BeforeExecuting(context => context.Address == 0x00A2)
+                .Do(context => Debug.Write(Encoding.ASCII.GetString(new[] {context.Z80.Registers.A})))
+                .ThenReturn();
+
+            Sut
+                .BeforeReadingMemory(context => context.Address >= 0x010C)
+                .SuppressMemoryAccessAndReturn(context => (byte)(context.Address & 0xFF));
+
+            Z80.Memory.SetContents(0x0100, helloWorld);
+
+            Z80.Reset();
+            Z80.Registers.PC = 0x0100;
+            Z80.Continue();
+        }
+
+        [Test]
+        public void Monitoring_memory_reads()
+        {
+            Sut
+                .BeforeExecuting(context => context.Address == 0x00A2)
+                .ThenReturn();
+
+            Sut
+                .AfterReadingMemory()
+                .Do(context => Debug.WriteLine($"{context.Address:X} = {context.Value:X}"));
 
             Z80.Memory.SetContents(0x0100, helloWorld);
 

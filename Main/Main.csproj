@@ -39,14 +39,34 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CodeExecutionContext.cs" />
-    <Compile Include="CodeExecutionWatch.cs" />
-    <Compile Include="CodeExecutionWatchHandle.cs" />
-    <Compile Include="IContext.cs" />
-    <Compile Include="MemoryAccessContext.cs" />
-    <Compile Include="MemoryAccessWatch.cs" />
+    <Compile Include="Contexts\AfterCodeExecutionContext.cs" />
+    <Compile Include="Contexts\BeforeCodeExecutionContext.cs" />
+    <Compile Include="Contexts\AfterMemoryReadContext.cs" />
+    <Compile Include="Contexts\AfterMemoryWriteContext.cs" />
+    <Compile Include="Contexts\BeforeMemoryWriteContext.cs" />
+    <Compile Include="Contexts\CodeExecutionContext.cs" />
+    <Compile Include="Contexts\BeforeMemoryReadContext.cs" />
+    <Compile Include="Watches\AfterCodeExecutionWatch.cs" />
+    <Compile Include="Watches\BeforeCodeExecutionWatch.cs" />
+    <Compile Include="Watches\AfterMemoryReadWatch.cs" />
+    <Compile Include="Watches\AfterMemoryWriteWatch.cs" />
+    <Compile Include="Watches\BeforeMemoryWriteWatch.cs" />
+    <Compile Include="Watches\BeforeMemoryReadWatch.cs" />
+    <Compile Include="Watches\CodeExecutionWatch.cs" />
+    <Compile Include="Watches\IWatch.cs" />
+    <Compile Include="WatchHandles\AfterCodeExecutionWatchHandle.cs" />
+    <Compile Include="WatchHandles\BeforeMemoryWriteWatchHandle.cs" />
+    <Compile Include="WatchHandles\AfterMemoryWriteWatchHandle.cs" />
+    <Compile Include="WatchHandles\BeforeCodeExecutionWatchHandle.cs" />
+    <Compile Include="WatchHandles\AfterMemoryReadWatchHandle.cs" />
+    <Compile Include="WatchHandles\BeforeMemoryReadWatchHandle.cs" />
+    <Compile Include="WatchHandles\MemoryAccessWatchHandle.cs" />
+    <Compile Include="WatchHandles\CodeExecutionWatchHandle.cs" />
+    <Compile Include="Contexts\IContext.cs" />
+    <Compile Include="Contexts\MemoryAccessContext.cs" />
+    <Compile Include="Watches\MemoryAccessWatch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Watch.cs" />
+    <Compile Include="WatchHandles\IWatchHandle.cs" />
     <Compile Include="Z80Watcher.cs" />
   </ItemGroup>
   <ItemGroup>

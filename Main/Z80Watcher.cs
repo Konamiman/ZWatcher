@@ -1,20 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Remoting.Messaging;
 using Konamiman.Z80dotNet;
+using Konamiman.ZTest.Contexts;
+using Konamiman.ZTest.Watches;
+using Konamiman.ZTest.WatchHandles;
 
 namespace Konamiman.ZTest
 {
     public class Z80Watcher
     {
-        private List<MemoryAccessWatch> MemoryReadWatches { get; } = new List<MemoryAccessWatch>();
+        private List<BeforeMemoryReadWatch> BeforeMemoryReadWatches { get; } = new List<BeforeMemoryReadWatch>();
 
-        private List<MemoryAccessWatch> MemoryWriteWatches { get; } = new List<MemoryAccessWatch>();
+        private List<AfterMemoryReadWatch> AfterMemoryReadWatches { get; } = new List<AfterMemoryReadWatch>();
 
-        private List<CodeExecutionWatch> BeforeCodeExecutionWatches { get; } = new List<CodeExecutionWatch>();
+        private List<BeforeMemoryWriteWatch> BeforeMemoryWriteWatches { get; } = new List<BeforeMemoryWriteWatch>();
 
-        private List<CodeExecutionWatch> AfterCodeExecutionWatches { get; } = new List<CodeExecutionWatch>();
+        private List<AfterMemoryWriteWatch> AfterMemoryWriteWatches { get; } = new List<AfterMemoryWriteWatch>();
+
+        private List<BeforeCodeExecutionWatch> BeforeCodeExecutionWatches { get; } = new List<BeforeCodeExecutionWatch>();
+
+        private List<AfterCodeExecutionWatch> AfterCodeExecutionWatches { get; } = new List<AfterCodeExecutionWatch>();
 
         public Z80Watcher(IZ80Processor z80)
         {
@@ -23,92 +29,130 @@ namespace Konamiman.ZTest
             z80.MemoryAccess += Z80OnMemoryAccess;
         }
 
-        public CodeExecutionWatchHandle BeforeExecuting(Func<CodeExecutionContext, bool> isMatch)
+        #region Creation of execution handles
+
+        public BeforeCodeExecutionWatchHandle BeforeExecuting(Func<CodeExecutionContext, bool> isMatch)
         {
-            var handle = new CodeExecutionWatchHandle(isMatch, isBeforeExecution: true);
+            var handle = new BeforeCodeExecutionWatchHandle(isMatch);
             BeforeCodeExecutionWatches.Add(handle.Watch);
             return handle;
         }
 
-        public CodeExecutionWatchHandle BeforeExecutingAt(ushort address)
+        public BeforeCodeExecutionWatchHandle BeforeExecutingAt(ushort address)
         {
             return BeforeExecuting(context => context.Address == address);
         }
 
-        public CodeExecutionWatchHandle BeforeExecuting()
+        public BeforeCodeExecutionWatchHandle BeforeExecuting()
         {
             return BeforeExecuting(context => true);
         }
 
-        public CodeExecutionWatchHandle AfterExecuting(Func<CodeExecutionContext, bool> isMatch)
+        public AfterCodeExecutionWatchHandle AfterExecuting(Func<CodeExecutionContext, bool> isMatch)
         {
-            var handle = new CodeExecutionWatchHandle(isMatch, isBeforeExecution: false);
+            var handle = new AfterCodeExecutionWatchHandle(isMatch);
             AfterCodeExecutionWatches.Add(handle.Watch);
             return handle;
         }
 
-        public CodeExecutionWatchHandle AfterExecutingAt(ushort address)
+        public AfterCodeExecutionWatchHandle AfterExecutingAt(ushort address)
         {
             return AfterExecuting(context => context.Address == address);
         }
 
-        public CodeExecutionWatchHandle AfterExecuting()
+        public AfterCodeExecutionWatchHandle AfterExecuting()
         {
             return AfterExecuting(context => true);
         }
 
-        private void Z80OnMemoryAccess(object sender, MemoryAccessEventArgs e)
+        #endregion
+
+        #region Creation of memory access handles
+
+        public BeforeMemoryReadWatchHandle BeforeReadingMemory(Func<BeforeMemoryReadContext, bool> isMatch)
         {
-            var z80 = (IZ80Processor)sender;
-            if(e.EventType == MemoryAccessEventType.AfterMemoryRead) {
-                var context = new MemoryAccessContext(z80, e.Address, true) { Value = e.Value };
-                ProcessMemoryAccess(context, MemoryReadWatches);
-            }
-            else if(e.EventType == MemoryAccessEventType.BeforeMemoryRead) {
-                var context = new MemoryAccessContext(z80, e.Address, false) { Value = null };
-                ProcessMemoryAccess(context, MemoryReadWatches);
-            }
-            else if(e.EventType == MemoryAccessEventType.AfterMemoryWrite) {
-                var context = new MemoryAccessContext(z80, e.Address, true) { Value = e.Value };
-                ProcessMemoryAccess(context, MemoryWriteWatches);
-            }
-            else if(e.EventType == MemoryAccessEventType.BeforeMemoryWrite) {
-                var context = new MemoryAccessContext(z80, e.Address, false) { Value = e.Value };
-                ProcessMemoryAccess(context, MemoryWriteWatches);
-                if(context.Value == null)
-                    e.CancelMemoryAccess = true;
-                else 
-                    e.Value = (byte)context.Value;
-            }
+            var handle = new BeforeMemoryReadWatchHandle(isMatch);
+            BeforeMemoryReadWatches.Add(handle.Watch);
+            return handle;
         }
 
-        private void ProcessMemoryAccess(MemoryAccessContext context, List<MemoryAccessWatch> watches)
+        public BeforeMemoryReadWatchHandle BeforeReadingMemory(ushort address)
         {
-            var matched = watches.Where(w => w.IsMatch(context));
-            foreach(var match in matched) {
-                foreach(var callback in match.Callbacks) {
-                    callback(context);
-                }
-            }
+            return BeforeReadingMemory(context => context.Address == address);
         }
+
+        public BeforeMemoryReadWatchHandle BeforeReadingMemory()
+        {
+            return BeforeReadingMemory(context => true);
+        }
+
+        public AfterMemoryReadWatchHandle AfterReadingMemory(Func<AfterMemoryReadContext, bool> isMatch)
+        {
+            var handle = new AfterMemoryReadWatchHandle(isMatch);
+            AfterMemoryReadWatches.Add(handle.Watch);
+            return handle;
+        }
+
+        public AfterMemoryReadWatchHandle AfterReadingMemory(ushort address)
+        {
+            return AfterReadingMemory(context => context.Address == address);
+        }
+
+        public AfterMemoryReadWatchHandle AfterReadingMemory()
+        {
+            return AfterReadingMemory(context => true);
+        }
+
+        public BeforeMemoryWriteWatchHandle BeforeWritingMemory(Func<BeforeMemoryWriteContext, bool> isMatch)
+        {
+            var handle = new BeforeMemoryWriteWatchHandle(isMatch);
+            BeforeMemoryWriteWatches.Add(handle.Watch);
+            return handle;
+        }
+
+        public BeforeMemoryWriteWatchHandle BeforeWritingMemory(ushort address)
+        {
+            return BeforeWritingMemory(context => context.Address == address);
+        }
+
+        public BeforeMemoryWriteWatchHandle BeforeWritingMemory()
+        {
+            return BeforeWritingMemory(context => true);
+        }
+
+        public AfterMemoryWriteWatchHandle AfterWritingMemory(Func<AfterMemoryWriteContext, bool> isMatch)
+        {
+            var handle = new AfterMemoryWriteWatchHandle(isMatch);
+            AfterMemoryWriteWatches.Add(handle.Watch);
+            return handle;
+        }
+
+        public AfterMemoryWriteWatchHandle AfterWritingMemory(ushort address)
+        {
+            return AfterWritingMemory(context => context.Address == address);
+        }
+
+        public AfterMemoryWriteWatchHandle AfterWritingMemory()
+        {
+            return AfterWritingMemory(context => true);
+        }
+
+        #endregion
         
+        #region Handling instruction execution
+
         private void Z80OnAfterInstructionExecution(object sender, AfterInstructionExecutionEventArgs e)
         {
-            Z80OnInstructionExecution(sender, e.Opcode, AfterCodeExecutionWatches, e.ExecutionStopper);
-        }
-
-        private void Z80OnInstructionExecution(object sender, byte[] opcode, IEnumerable<Watch<CodeExecutionContext>> watches, IExecutionStopper executionStopper)
-        {
             var z80 = (IZ80Processor)sender;
-            var address = (ushort)(z80.Registers.PC - opcode.Length);
-            var context = new CodeExecutionContext(z80, address, opcode, instructionHasBeenExecuted: executionStopper != null);
+            var address = (ushort)(z80.Registers.PC - e.Opcode.Length);
+            var context = new AfterCodeExecutionContext(z80, address, e.Opcode);
             
-            var matched = watches.Where(w => w.IsMatch(context));
+            var matched = AfterCodeExecutionWatches.Where(w => w.IsMatch(context));
             foreach(var match in matched) {
                 foreach(var callback in match.Callbacks) {
                     callback(context);
-                    if(context.MustStop && executionStopper != null) {
-                        executionStopper.Stop();
+                    if(context.MustStop) {
+                        e.ExecutionStopper.Stop();
                         return;
                     }
                 }
@@ -117,7 +161,64 @@ namespace Konamiman.ZTest
 
         private void Z80OnBeforeInstructionExecution(object sender, BeforeInstructionExecutionEventArgs e)
         {
-            Z80OnInstructionExecution(sender, e.Opcode, BeforeCodeExecutionWatches, null);
+            var z80 = (IZ80Processor)sender;
+            var address = (ushort)(z80.Registers.PC - e.Opcode.Length);
+            var context = new BeforeCodeExecutionContext(z80, address, e.Opcode);
+            
+            var matched = BeforeCodeExecutionWatches.Where(w => w.IsMatch(context));
+            foreach(var match in matched) {
+                foreach(var callback in match.Callbacks) {
+                    callback(context);
+                }
+            }
         }
+
+        #endregion
+
+        #region Handling memory access
+
+        private void Z80OnMemoryAccess(object sender, MemoryAccessEventArgs e)
+        {
+            var z80 = (IZ80Processor)sender;
+            if(e.EventType == MemoryAccessEventType.AfterMemoryRead) {
+                var context = new AfterMemoryReadContext(z80, e.Address, e.Value);
+                ProcessMemoryAccess(context, AfterMemoryReadWatches);
+                e.Value = context.Value;
+            }
+            else if(e.EventType == MemoryAccessEventType.BeforeMemoryRead) {
+                var context = new BeforeMemoryReadContext(z80, e.Address);
+                ProcessMemoryAccess(context, BeforeMemoryReadWatches);
+                if(context.Value != null) {
+                    e.Value = (byte)context.Value;
+                    e.CancelMemoryAccess = true;
+                }
+            }
+            else if(e.EventType == MemoryAccessEventType.AfterMemoryWrite) {
+                var context = new AfterMemoryWriteContext(z80, e.Address, e.Value);
+                ProcessMemoryAccess(context, AfterMemoryWriteWatches);
+            }
+            else if(e.EventType == MemoryAccessEventType.BeforeMemoryWrite) {
+                var context = new BeforeMemoryWriteContext(z80, e.Address, e.Value);
+                ProcessMemoryAccess(context, BeforeMemoryWriteWatches);
+                if(context.Value == null)
+                    e.CancelMemoryAccess = true;
+                else 
+                    e.Value = (byte)context.Value;
+            }
+        }
+
+        private void ProcessMemoryAccess<TWatch, TContext>(TContext context, IEnumerable<TWatch> watches)
+            where TContext : MemoryAccessContext
+            where TWatch : IWatch<TContext>
+        {
+            var matched = watches.Where(w => w.IsMatch(context));
+            foreach(var match in matched) {
+                foreach(var callback in match.Callbacks) {
+                    callback(context);
+                }
+            }
+        }
+
+        #endregion
     }
 }

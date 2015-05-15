@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Konamiman.ZTest.Contexts;
+﻿using Konamiman.ZTest.Contexts;
 
 namespace Konamiman.ZTest.WatchHandles
 {
@@ -9,8 +7,7 @@ namespace Konamiman.ZTest.WatchHandles
     /// </summary>
     /// <typeparam name="TContext"></typeparam>
     public abstract class MemoryAccessWatchHandle<TContext> 
-        : IWatchHandle<TContext> where TContext : MemoryAccessContext
+        : WatchHandle<TContext> where TContext : MemoryAccessContext
     {
-        public List<Action<TContext>> Callbacks { get; } = new List<Action<TContext>>();
     }
 }

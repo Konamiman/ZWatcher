@@ -4,18 +4,25 @@ using Konamiman.ZTest.Contexts;
 
 namespace Konamiman.ZTest.Watches
 {
-    internal interface IWatch<in T> where T : IContext
+    internal interface ITimesreachedAware
+    {
+        int TimesReached { get; set; }
+
+        void VerifyRequiredReaches();
+    }
+
+    internal interface IWatch<in T> : ITimesreachedAware 
+        where T : IContext
     {
         IEnumerable<Action<T>> Callbacks { get; }
 
-        int TimesReached { get; set; }
-
         Func<T, bool> IsMatch { get; }
+
+        string DisplayName { get; set; }
 
         long MinimumReachesRequired { get; set; }
 
         long MaximumReachesAllowed { get; set; }
 
-        string DisplayName { get; set; }
     }
 }

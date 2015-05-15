@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Konamiman.Z80dotNet;
 using Konamiman.ZTest.Contexts;
 using Konamiman.ZTest.Watches;
@@ -36,6 +37,51 @@ namespace Konamiman.ZTest
             z80.AfterInstructionExecution += Z80OnAfterInstructionExecution;
             z80.MemoryAccess += Z80OnMemoryAccess;
         }
+
+        #region Verifying expectations
+
+        /// <summary>
+        /// Verifies that all the declared expectations for watch reaching times
+        /// have been fulfilled.
+        /// </summary>
+        /// <exception cref="ExpectationFailedException">At least one watch was not reached the number of times expected.</exception>
+        public void VerifyAllExpectations()
+        {
+            var watches = GetAllRegisteredWatches();
+            foreach(var watch in watches)
+                watch.VerifyRequiredReaches();
+        }
+
+        private IEnumerable<ITimesreachedAware> GetAllRegisteredWatches()
+        {
+            var watchesListProperties =
+                GetType()
+                    .GetProperties(BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Where(p => IsListOfVerifiables(p.PropertyType))
+                    .ToArray();
+
+            return watchesListProperties.SelectMany(list => (IEnumerable<ITimesreachedAware>)list.GetValue(this, null));
+        }
+        
+        private static bool IsListOfVerifiables(Type type)
+        {
+            return (
+                type.IsGenericType &&
+                type.GetGenericTypeDefinition() == typeof(List<>) &&
+                (typeof(ITimesreachedAware).IsAssignableFrom(type.GetGenericArguments()[0])));
+        }
+
+        /// <summary>
+        /// Sets all reach counters for all the registered watches to zero.
+        /// </summary>
+        public void ResetAllReachCounts()
+        {
+            var watches = GetAllRegisteredWatches();
+            foreach(var watch in watches)
+                watch.TimesReached = 0;
+        }
+       
+        #endregion
 
         #region Creation of execution handles
 
@@ -408,7 +454,6 @@ namespace Konamiman.ZTest
                 throw new WatchExecutionException(message, currentWatch.DisplayName, executingMatchers, context, ex);
             }
         }
-
 
         private void Z80OnBeforeInstructionExecution(object sender, BeforeInstructionExecutionEventArgs e)
         {

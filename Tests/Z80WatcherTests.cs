@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Text;
 using Konamiman.Z80dotNet;
 using Konamiman.ZTest;
-using Newtonsoft.Json;
 using NUnit.Framework;
 
 namespace Konamiman.ZTests.Tests
@@ -214,6 +213,74 @@ namespace Konamiman.ZTests.Tests
                 Debug.WriteLine(ex.WatchName);
                 Debug.WriteLine(ex.WhenExecutingMatcher);
             }
+
+            Sut.VerifyAllExpectations();
+        }
+
+        [Test]
+        public void Verifying_expectations()
+        {
+            Sut
+                .BeforeExecutingAt(0x00A2)
+                .Named("Buerh")
+                .ThenReturn()
+                .NotExpected();
+
+            Z80.Memory.SetContents(0x0100, helloWorld);
+
+            Z80.Reset();
+            Z80.Registers.PC = 0x0100;
+
+            Z80.Continue();
+
+            try
+            {
+                Sut.VerifyAllExpectations();
+            }
+            catch(ExpectationFailedException ex)
+            {
+                Debug.WriteLine(ex.Message);
+                Debug.WriteLine(ex.WatchName);
+                Debug.WriteLine(ex.MinReachesRequired);
+                Debug.WriteLine(ex.MaxReachesRequired);
+            }
+
+            Sut.ResetAllReachCounts();
+
+            Sut.VerifyAllExpectations();
+        }
+
+        [Test]
+        public void Extending_handles()
+        {
+            var handle = Sut
+                .BeforeExecutingAt(0x00A2)
+                .ThenReturn();
+
+            handle.PrintAddress();
+
+            Z80.Memory.SetContents(0x0100, helloWorld);
+
+            Z80.Reset();
+            Z80.Registers.PC = 0x0100;
+
+            Z80.Continue();
+        }
+
+        [Test]
+        public void Extending_handles_2()
+        {
+            Sut
+                .BeforeExecutingAt(0x00A2)
+                .PrintAddress2()
+                .ThenReturn();
+
+            Z80.Memory.SetContents(0x0100, helloWorld);
+
+            Z80.Reset();
+            Z80.Registers.PC = 0x0100;
+
+            Z80.Continue();
         }
     }
 }

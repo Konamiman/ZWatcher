@@ -1,5 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Net.Mail;
+using System.Net.NetworkInformation;
 using System.Text;
 using Konamiman.Z80dotNet;
 using Konamiman.ZTest;
@@ -341,6 +346,82 @@ namespace Konamiman.ZTests.Tests
 
             Z80.Reset();
             Z80.Registers.PC = 0x0100;
+            Z80.Continue();
+        }
+
+        [Test]
+        public void Use_the_assembler()
+        {
+            var message = "Mooolaaaaa!!!";
+            var printedChars = new List<byte>();
+
+            var program =@"
+ org 100h
+
+CHPUT:  equ 00A2h
+
+ ld hl,DATA
+LOOP:
+ ld a,(hl)
+ or a
+ ret z
+ call CHPUT
+ inc hl
+ jr LOOP
+
+DATA: db ""{0}"",0";
+
+            program = string.Format(program, message);
+
+            Sut
+                .BeforeExecutingAt("CHPUT")
+                .Do(context => Debug.Write(Encoding.ASCII.GetString(new[] {context.Z80.Registers.A})))
+                .Do(context => printedChars.Add(context.Z80.Registers.A))
+                .ThenReturn()
+                .ExpectedExactly(message.Length);
+            
+            AssembleAndExecute(program);
+
+            Sut.VerifyAllExpectations();
+
+            Assert.AreEqual(message, Encoding.ASCII.GetString(printedChars.ToArray()));
+        }
+
+        private void AssembleAndExecute(string program, ushort address = 0x0100)
+        {
+            File.WriteAllText("temp.asm", program);
+            var psi = new ProcessStartInfo("sjasm.exe", "-s temp.asm")
+            {
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                UseShellExecute = false
+            };
+            var proc = new Process();
+            proc.StartInfo = psi;
+            proc.Start();
+            proc.WaitForExit();
+
+            var output = proc.StandardOutput.ReadToEnd();
+            Debug.WriteLine(output);
+
+            if(proc.ExitCode != 0)
+                throw new InvalidOperationException($"Assembler exited with code {proc.ExitCode}");
+
+            var symbolLines = File.ReadAllLines("temp.sym");
+            foreach(var line in symbolLines)
+            {
+                var parts = line.Split(':');
+                var symbol = parts[0];
+                var hexValue = 
+                    new string(parts[1].Replace("equ","").Where(c => char.IsDigit(c) || (c >= 'A' && c <= 'F')).ToArray());
+                var value = Convert.ToUInt16(hexValue.TrimStart('0'), 16);
+                Sut.SymbolsDictionary[symbol] = value;
+            }
+
+            var bytes = File.ReadAllBytes("temp.out");
+            Z80.Memory.SetContents(address, bytes);
+            Z80.Reset();
+            Z80.Registers.PC = address;
             Z80.Continue();
         }
     }

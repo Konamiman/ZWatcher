@@ -350,19 +350,16 @@ namespace Konamiman.ZTests.Tests
         }
 
         [Test]
-        public void Use_the_assembler()
+        public void Character_print_loop()
         {
-            var message = "Mooolaaaaa!!!";
+            var message = "Esto mola mucho!";
             var printedChars = new List<byte>();
 
             var program =@"
- org 100h
-
 CHPUT:  equ 00A2h
 
  ld hl,DATA
-LOOP:
- ld a,(hl)
+LOOP: ld a,(hl)
  or a
  ret z
  call CHPUT
@@ -370,7 +367,6 @@ LOOP:
  jr LOOP
 
 DATA: db ""{0}"",0";
-
             program = string.Format(program, message);
 
             Sut
@@ -389,6 +385,8 @@ DATA: db ""{0}"",0";
 
         private void AssembleAndExecute(string program, ushort address = 0x0100)
         {
+            program = $" org 0{address:X}h\r\n{program}";
+
             File.WriteAllText("temp.asm", program);
             var psi = new ProcessStartInfo("sjasm.exe", "-s temp.asm")
             {

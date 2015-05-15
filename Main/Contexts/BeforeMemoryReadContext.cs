@@ -1,4 +1,5 @@
-﻿using Konamiman.Z80dotNet;
+﻿using System.Collections.Generic;
+using Konamiman.Z80dotNet;
 
 namespace Konamiman.ZTest.Contexts
 {
@@ -13,8 +14,8 @@ namespace Konamiman.ZTest.Contexts
         /// </summary>
         public byte? Value { get; set; }
 
-        public BeforeMemoryReadContext(IZ80Processor z80, ushort address)
-            : base(z80, address)
+        public BeforeMemoryReadContext(IZ80Processor z80, ushort address, IDictionary<string, ushort> symbols)
+            : base(z80, address, symbols)
         {
         }
     }

@@ -1,15 +1,13 @@
-﻿using Konamiman.Z80dotNet;
+﻿using System.Collections.Generic;
+using Konamiman.Z80dotNet;
 
 namespace Konamiman.ZTest.Contexts
 {
     /// <summary>
     /// Base class for all the instruction execution related contexts.
     /// </summary>
-    public abstract class CodeExecutionContext : IContext
+    public abstract class CodeExecutionContext : Context
     {
-        public IZ80Processor Z80 { get; }
-        public int TimesReached { get; set; }
-
         /// <summary>
         /// Memory address where the opcode (to be) executed is stored.
         /// </summary>
@@ -20,9 +18,9 @@ namespace Konamiman.ZTest.Contexts
         /// </summary>
         public byte[] Opcode { get; }
         
-        internal CodeExecutionContext(IZ80Processor z80, ushort address, byte[] opcode)
+        internal CodeExecutionContext(IZ80Processor z80, ushort address, byte[] opcode, IDictionary<string, ushort> symbols) 
+            : base(z80, symbols)
         {
-            this.Z80 = z80;
             this.Address = address;
             this.Opcode = opcode;
         }

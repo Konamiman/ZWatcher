@@ -1,4 +1,5 @@
-﻿using Konamiman.Z80dotNet;
+﻿using System.Collections.Generic;
+using Konamiman.Z80dotNet;
 
 namespace Konamiman.ZTest.Contexts
 {
@@ -15,6 +16,11 @@ namespace Konamiman.ZTest.Contexts
         /// <summary>
         /// Gets or sets a value that indicates how many times the watch has been reached, including the current one.
         /// </summary>
-        int TimesReached { get; set;  }
+        int TimesReached { get; set; }
+
+        /// <summary>
+        /// The symbols dictionary currently in use.
+        /// </summary>
+        IDictionary<string, ushort> Symbols { get; }
     }
 }

@@ -282,5 +282,47 @@ namespace Konamiman.ZTests.Tests
 
             Z80.Continue();
         }
+
+        [Test]
+        public void Using_symbols_dictionary()
+        {
+            Sut.SymbolsDictionary["CHPUT"] = 0x00A2;
+            
+            Sut
+                .BeforeExecutingAt(0x100)
+                .Do(context => Debug.WriteLine("Let's go!"));
+
+            Sut
+                .BeforeExecutingAt("CHPUT")
+                .Do(context => Debug.Write(Encoding.ASCII.GetString(new[] {context.Z80.Registers.A})))
+                .ThenReturn();
+            
+            Z80.Memory.SetContents(0x0100, helloWorld);
+
+            Z80.Reset();
+            Z80.Registers.PC = 0x0100;
+            Z80.Continue();
+        }
+
+        [Test]
+        public void Changing_read_value_using_symbols()
+        {
+            Sut.SymbolsDictionary.Add("DATA", 0x010C);
+
+            Sut
+                .BeforeExecuting(context => context.Address == 0x00A2)
+                .Do(context => Debug.Write(Encoding.ASCII.GetString(new[] {context.Z80.Registers.A})))
+                .ThenReturn();
+
+            Sut
+                .BeforeReadingMemory(context => context.Address >= context.Symbols["DATA"])
+                .SuppressMemoryAccessAndReturn(context => (byte)(context.Address & 0xFF));
+
+            Z80.Memory.SetContents(0x0100, helloWorld);
+
+            Z80.Reset();
+            Z80.Registers.PC = 0x0100;
+            Z80.Continue();
+        }
     }
 }

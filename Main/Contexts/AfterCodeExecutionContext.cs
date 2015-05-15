@@ -1,4 +1,5 @@
-﻿using Konamiman.Z80dotNet;
+﻿using System.Collections.Generic;
+using Konamiman.Z80dotNet;
 
 namespace Konamiman.ZTest.Contexts
 {
@@ -12,9 +13,9 @@ namespace Konamiman.ZTest.Contexts
         /// has been executed.
         /// </summary>
         public bool MustStop { get; set; }
-
-        internal AfterCodeExecutionContext(IZ80Processor z80, ushort address, byte[] opcode)
-            : base(z80, address, opcode)
+        
+        internal AfterCodeExecutionContext(IZ80Processor z80, ushort address, byte[] opcode, IDictionary<string, ushort> symbols)
+            : base(z80, address, opcode, symbols)
         {
         }
     }

@@ -46,6 +46,7 @@
     <Compile Include="Contexts\BeforeMemoryWriteContext.cs" />
     <Compile Include="Contexts\CodeExecutionContext.cs" />
     <Compile Include="Contexts\BeforeMemoryReadContext.cs" />
+    <Compile Include="Contexts\Context.cs" />
     <Compile Include="Watches\AfterCodeExecutionWatch.cs" />
     <Compile Include="Watches\BeforeCodeExecutionWatch.cs" />
     <Compile Include="Watches\AfterMemoryReadWatch.cs" />

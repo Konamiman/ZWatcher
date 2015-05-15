@@ -94,7 +94,7 @@ namespace Konamiman.ZTest.WatchHandles
         /// actually written to memory.
         /// </summary>
         /// <returns></returns>
-        public BeforeMemoryWriteWatchHandle AndSuppressWrite()
+        public BeforeMemoryWriteWatchHandle SuppressWrite()
         {
             Callbacks.Add(context => context.Value = null);
             return this;
@@ -105,7 +105,7 @@ namespace Konamiman.ZTest.WatchHandles
         /// </summary>
         /// <param name="newValue"></param>
         /// <returns></returns>
-        public BeforeMemoryWriteWatchHandle AndActuallyWrite(byte newValue)
+        public BeforeMemoryWriteWatchHandle ActuallyWrite(byte newValue)
         {
             Callbacks.Add(context => context.Value = newValue);
             return this;
@@ -116,7 +116,7 @@ namespace Konamiman.ZTest.WatchHandles
         /// </summary>
         /// <param name="setNewValue"></param>
         /// <returns></returns>
-        public BeforeMemoryWriteWatchHandle AndActuallyWrite(Func<BeforeMemoryWriteContext, byte?> setNewValue)
+        public BeforeMemoryWriteWatchHandle ActuallyWrite(Func<BeforeMemoryWriteContext, byte?> setNewValue)
         {
             Callbacks.Add(context => context.Value = setNewValue(context));
             return this;

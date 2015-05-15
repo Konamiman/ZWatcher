@@ -432,7 +432,7 @@ namespace Konamiman.ZTest
         private void Z80OnAfterInstructionExecution(object sender, AfterInstructionExecutionEventArgs e)
         {
             var z80 = (IZ80Processor)sender;
-            var address = (ushort)(z80.Registers.PC - e.Opcode.Length);
+            var address = (ushort)e.LocalUserState;
             var context = new AfterCodeExecutionContext(z80, address, e.Opcode, SymbolsDictionary);
             
             InvokeAllCallbacksOnMatchingWatches(AfterCodeExecutionWatches, context);
@@ -445,8 +445,7 @@ namespace Konamiman.ZTest
         {
             IWatch<T> currentWatch = null;
             var executingMatchers = true;
-            try
-            {
+            try {
                 var matchingWatches = watches
                     .Where(w => { currentWatch = w; return w.IsMatch(context); })
                     .ToArray();
@@ -468,8 +467,7 @@ namespace Konamiman.ZTest
                     }
                 }
             }
-            catch(Exception ex)
-            {
+            catch(Exception ex) {
                 var what = executingMatchers ? "the matching delegate" : "one of the callbacks";
                 var message =
                     $"Unhandled exception when invoking {what} for the watch \"{currentWatch.DisplayName}\": {ex.Message}";
@@ -481,6 +479,7 @@ namespace Konamiman.ZTest
         {
             var z80 = (IZ80Processor)sender;
             var address = (ushort)(z80.Registers.PC - e.Opcode.Length);
+            e.LocalUserState = address;
             var context = new BeforeCodeExecutionContext(z80, address, e.Opcode, SymbolsDictionary);
             
             InvokeAllCallbacksOnMatchingWatches(BeforeCodeExecutionWatches, context);

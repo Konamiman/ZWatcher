@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.SymbolStore;
 using System.IO;
 using System.Linq;
-using System.Net.Mail;
-using System.Net.NetworkInformation;
 using System.Text;
 using Konamiman.Z80dotNet;
 using Konamiman.ZTest;
@@ -17,17 +16,22 @@ namespace Konamiman.ZTests.Tests
         private Z80Processor Z80 { get; set; }
         private Z80Watcher Sut { get; set; }
 
-        private readonly byte[] helloWorld = 
-        {
-            0x21, 0x0C, 0x01,   //LD HL,data
-            0x7E,   //LD A,(HL)
-            0xB7,   //OR A
-            0xC8,   //RET Z
-            0xCD, 0xA2, 0x00,   //CALL 00A2h
-            0x23,   //INC HL
-            0x18, 0xF7, //JR F8h
-            0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x21, 0x21, 0x00    //db "Hello!",0
-        };
+        private const string helloWorld = "Hello, world!";
+
+        private readonly string helloWorldProgram =
+            $@"
+CHPUT:  equ 00A2h
+
+ ld sp,07000h
+ ld hl,DATA
+LOOP: ld a,(hl)
+ or a
+ ret z
+ call CHPUT
+ inc hl
+ jr LOOP
+
+DATA: db ""{helloWorld}"",0";
 
         [SetUp]
         public void Setup()
@@ -44,23 +48,168 @@ namespace Konamiman.ZTests.Tests
         }
 
         [Test]
-        public void Hello_World()
+        public void Can_stub_routines()
+        {
+            var printedChars = new List<byte>();
+
+            Sut
+                .BeforeExecutingAt("CHPUT")
+                .Do(context => printedChars.Add(context.Z80.Registers.A))
+                .ExecuteRet();
+            
+            AssembleAndExecute(helloWorldProgram);
+
+            Assert.AreEqual(helloWorld, Encoding.ASCII.GetString(printedChars.ToArray()));
+        }
+
+        [Test]
+        public void Can_stop_execution()
+        {
+            var printedChars = new List<byte>();
+            
+            Sut
+                .BeforeExecutingAt("CHPUT")
+                .Do(context => printedChars.Add(context.Z80.Registers.A))
+                .ExecuteRet();
+
+            Sut
+                .AfterExecuting(context =>
+                    context.Address == context.Symbols["CHPUT"] &&
+                    context.Z80.Registers.A == Ascii(','))
+                .StopExecution();
+
+            AssembleAndExecute(helloWorldProgram);
+
+            Assert.AreEqual("Hello,", Encoding.ASCII.GetString(printedChars.ToArray()));
+        }
+        
+        private byte Ascii(char theChar)
+        {
+            return Encoding.ASCII.GetBytes(new[] {theChar})[0];
+        }
+
+        [Test]
+        public void Can_replace_value_read_from_memory_before_read()
+        {
+            var printedChars = new List<byte>();
+            
+            Sut
+                .BeforeExecutingAt("CHPUT")
+                .Do(context => printedChars.Add(context.Z80.Registers.A))
+                .ExecuteRet();
+
+            Sut
+                .BeforeReadingMemory(context =>
+                    context.Address >= context.Symbols["DATA"] &&
+                    context.Address < context.Symbols["DATA"] + helloWorld.Length)
+                .SuppressMemoryAccessAndReturn(Ascii('A'));
+
+            AssembleAndExecute(helloWorldProgram);
+
+            Assert.AreEqual(new string('A', helloWorld.Length), Encoding.ASCII.GetString(printedChars.ToArray()));
+        }
+
+        [Test]
+        public void Can_replace_value_read_from_memory_after_read()
+        {
+            var printedChars = new List<byte>();
+            
+            Sut
+                .BeforeExecutingAt("CHPUT")
+                .Do(context => printedChars.Add(context.Z80.Registers.A))
+                .ExecuteRet();
+
+            Sut
+                .AfterReadingMemory(context =>
+                    context.Address >= context.Symbols["DATA"] &&
+                    context.Value != 0)
+                .ReplaceObtainedValueWith(Ascii('A'));
+
+            AssembleAndExecute(helloWorldProgram);
+
+            Assert.AreEqual(new string('A', helloWorld.Length), Encoding.ASCII.GetString(printedChars.ToArray()));
+        }
+
+        private string writeMemoryProgram =
+            $@"
+ ld ix,DATA
+ ld (ix),10
+ ld (ix+1),20
+ ld (ix+2),30
+ ld (ix+3),40
+ ret
+DATA:   db 1,2,3,4
+";
+
+        [Test]
+        public void Can_suppress_memory_write()
         {
             Sut
-                .BeforeExecutingAt(0x100)
-                .Do(context => Debug.WriteLine("Let's go!"));
+                .BeforeWritingMemory(context =>
+                    context.Address >= context.Symbols["DATA"])
+                .SuppressWrite();
+
+            AssembleAndExecute(writeMemoryProgram);
+
+            Assert.AreEqual(new byte[] {1,2,3,4}, Z80.Memory.GetContents(Sut.SymbolsDictionary["DATA"], 4));
+        }
+
+        [Test]
+        public void Can_replace_value_written_to_memory()
+        {
+            Sut
+                .BeforeWritingMemory(context =>
+                    context.Address >= context.Symbols["DATA"])
+                .ActuallyWrite(context => (byte)(context.Value + 1));
+
+            AssembleAndExecute(writeMemoryProgram);
+
+            Assert.AreEqual(new byte[] {11,21,31,41}, Z80.Memory.GetContents(Sut.SymbolsDictionary["DATA"], 4));
+        }
+
+        [Test]
+        public void Can_act_after_writing_to_memory()
+        {
+            var writenValues = new List<byte>();
 
             Sut
-                .BeforeExecuting(context => context.Address == 0x00A2)
-                .Do(context => Debug.Write(Encoding.ASCII.GetString(new[] {context.Z80.Registers.A})))
-                .ThenReturn();
-            
-            Z80.Memory.SetContents(0x0100, helloWorld);
+                .AfterWritingMemory(context =>
+                    context.Address >= context.Symbols["DATA"])
+                .Do(context => writenValues.Add(context.Value));
 
-            Z80.Reset();
-            Z80.Registers.PC = 0x0100;
-            Z80.Continue();
+            AssembleAndExecute(writeMemoryProgram);
+
+            Assert.AreEqual(new byte[] {10,20,30,40}, writenValues);
         }
+
+        private string writePortsProgram =
+            $@"
+ ld a,1
+ out (10),a
+ inc a
+ out (11),a
+ inc a
+ out (12),a
+ inc a
+ out (13),a
+ ret
+";
+
+        [Test]
+        public void Can_suppress_port_write()
+        {
+            Sut
+                .BeforeWritingPort(context => context.Address >= 12)
+                .SuppressWrite();
+
+            AssembleAndExecute(writePortsProgram);
+
+            Assert.AreEqual(new byte[] {1, 2, 0, 0}, Z80.PortsSpace.GetContents(10, 4));
+        }
+
+        //WIP...
+
+
 
         [Test]
         public void Before_and_after_instruction_handles()
@@ -77,13 +226,9 @@ namespace Konamiman.ZTests.Tests
                 .BeforeExecuting(context => context.Address == 0x00A2)
                 .Do(context => Debug.WriteLine($"--- 00A2: {context.TimesReached} times"))
                 .Do(context => { if(context.TimesReached > 3) context.TimesReached = 0; })
-                .ThenReturn();
+                .ExecuteRet();
 
-            Z80.Memory.SetContents(0x0100, helloWorld);
-
-            Z80.Reset();
-            Z80.Registers.PC = 0x0100;
-            Z80.Continue();
+            AssembleAndExecute(helloWorldProgram);
         }
 
         [Test]
@@ -91,7 +236,7 @@ namespace Konamiman.ZTests.Tests
         {
             Sut
                 .AfterExecutingAt(0x103)
-                .ThenStopExecution();
+                .StopExecution();
 
             Sut
                 .BeforeExecuting()
@@ -103,13 +248,9 @@ namespace Konamiman.ZTests.Tests
 
             Sut
                 .BeforeExecuting(context => context.Address == 0x00A2)
-                .ThenReturn();
+                .ExecuteRet();
 
-            Z80.Memory.SetContents(0x0100, helloWorld);
-
-            Z80.Reset();
-            Z80.Registers.PC = 0x0100;
-            Z80.Continue();
+            AssembleAndExecute(helloWorldProgram);
         }
 
         [Test]
@@ -119,17 +260,13 @@ namespace Konamiman.ZTests.Tests
                 .BeforeExecuting(context => context.Address == 0x00A2)
                 .Named("TalYCual")
                 .Do(context => Debug.Write(Encoding.ASCII.GetString(new[] {context.Z80.Registers.A})))
-                .ThenReturn();
+                .ExecuteRet();
 
             Sut
                 .AfterReadingMemory(context => context.Address >= 0x010C)
-                .ThenReplaceObtainedValueWith(context => (byte)(context.Value + 1));
+                .ReplaceObtainedValueWith(context => (byte)(context.Value + 1));
 
-            Z80.Memory.SetContents(0x0100, helloWorld);
-
-            Z80.Reset();
-            Z80.Registers.PC = 0x0100;
-            Z80.Continue();
+            AssembleAndExecute(helloWorldProgram);
         }
 
         [Test]
@@ -138,17 +275,13 @@ namespace Konamiman.ZTests.Tests
             Sut
                 .BeforeExecuting(context => context.Address == 0x00A2)
                 .Do(context => Debug.Write(Encoding.ASCII.GetString(new[] {context.Z80.Registers.A})))
-                .ThenReturn();
+                .ExecuteRet();
 
             Sut
                 .BeforeReadingMemory(context => context.Address >= 0x010C)
                 .SuppressMemoryAccessAndReturn(context => (byte)(context.Address & 0xFF));
 
-            Z80.Memory.SetContents(0x0100, helloWorld);
-
-            Z80.Reset();
-            Z80.Registers.PC = 0x0100;
-            Z80.Continue();
+            AssembleAndExecute(helloWorldProgram);
         }
 
         [Test]
@@ -156,17 +289,13 @@ namespace Konamiman.ZTests.Tests
         {
             Sut
                 .BeforeExecuting(context => context.Address == 0x00A2)
-                .ThenReturn();
+                .ExecuteRet();
 
             Sut
                 .AfterReadingMemory()
                 .Do(context => Debug.WriteLine($"{context.Address:X} = {context.Value:X}"));
 
-            Z80.Memory.SetContents(0x0100, helloWorld);
-
-            Z80.Reset();
-            Z80.Registers.PC = 0x0100;
-            Z80.Continue();
+            AssembleAndExecute(helloWorldProgram);
         }
 
         [Test]
@@ -175,16 +304,11 @@ namespace Konamiman.ZTests.Tests
             Sut
                 .BeforeExecuting(context => {throw new Exception("Buh!!");})
                 .Named("Buerh")
-                .ThenReturn();
-
-            Z80.Memory.SetContents(0x0100, helloWorld);
-
-            Z80.Reset();
-            Z80.Registers.PC = 0x0100;
+                .ExecuteRet();
 
             try
             {
-                Z80.Continue();
+                AssembleAndExecute(helloWorldProgram);
             }
             catch(WatchExecutionException ex)
             {
@@ -201,16 +325,11 @@ namespace Konamiman.ZTests.Tests
                 .BeforeExecuting()
                 .Named("Buerh")
                 .Do(context => {throw new Exception("Buh!!");})
-                .ThenReturn();
-
-            Z80.Memory.SetContents(0x0100, helloWorld);
-
-            Z80.Reset();
-            Z80.Registers.PC = 0x0100;
+                .ExecuteRet();
 
             try
             {
-                Z80.Continue();
+                AssembleAndExecute(helloWorldProgram);
             }
             catch(WatchExecutionException ex)
             {
@@ -228,15 +347,10 @@ namespace Konamiman.ZTests.Tests
             Sut
                 .BeforeExecutingAt(0x00A2)
                 .Named("Buerh")
-                .ThenReturn()
+                .ExecuteRet()
                 .NotExpected();
 
-            Z80.Memory.SetContents(0x0100, helloWorld);
-
-            Z80.Reset();
-            Z80.Registers.PC = 0x0100;
-
-            Z80.Continue();
+            AssembleAndExecute(helloWorldProgram);
 
             try
             {
@@ -260,16 +374,11 @@ namespace Konamiman.ZTests.Tests
         {
             var handle = Sut
                 .BeforeExecutingAt(0x00A2)
-                .ThenReturn();
+                .ExecuteRet();
 
             handle.PrintAddress();
 
-            Z80.Memory.SetContents(0x0100, helloWorld);
-
-            Z80.Reset();
-            Z80.Registers.PC = 0x0100;
-
-            Z80.Continue();
+            AssembleAndExecute(helloWorldProgram);
         }
 
         [Test]
@@ -278,14 +387,9 @@ namespace Konamiman.ZTests.Tests
             Sut
                 .BeforeExecutingAt(0x00A2)
                 .PrintAddress2()
-                .ThenReturn();
+                .ExecuteRet();
 
-            Z80.Memory.SetContents(0x0100, helloWorld);
-
-            Z80.Reset();
-            Z80.Registers.PC = 0x0100;
-
-            Z80.Continue();
+            AssembleAndExecute(helloWorldProgram);
         }
 
         [Test]
@@ -300,13 +404,9 @@ namespace Konamiman.ZTests.Tests
             Sut
                 .BeforeExecutingAt("CHPUT")
                 .Do(context => Debug.Write(Encoding.ASCII.GetString(new[] {context.Z80.Registers.A})))
-                .ThenReturn();
+                .ExecuteRet();
             
-            Z80.Memory.SetContents(0x0100, helloWorld);
-
-            Z80.Reset();
-            Z80.Registers.PC = 0x0100;
-            Z80.Continue();
+            AssembleAndExecute(helloWorldProgram);
         }
 
         [Test]
@@ -317,17 +417,13 @@ namespace Konamiman.ZTests.Tests
             Sut
                 .BeforeExecuting(context => context.Address == 0x00A2)
                 .Do(context => Debug.Write(Encoding.ASCII.GetString(new[] {context.Z80.Registers.A})))
-                .ThenReturn();
+                .ExecuteRet();
 
             Sut
                 .BeforeReadingMemory(context => context.Address >= context.Symbols["DATA"])
                 .SuppressMemoryAccessAndReturn(context => (byte)(context.Address & 0xFF));
 
-            Z80.Memory.SetContents(0x0100, helloWorld);
-
-            Z80.Reset();
-            Z80.Registers.PC = 0x0100;
-            Z80.Continue();
+            AssembleAndExecute(helloWorldProgram);
         }
 
         [Test]
@@ -340,13 +436,9 @@ namespace Konamiman.ZTests.Tests
             Sut
                 .BeforeExecutingAt(0x00A2)
                 .Do(context => context.DebugCharAsAcii())
-                .ThenReturn();
+                .ExecuteRet();
             
-            Z80.Memory.SetContents(0x0100, helloWorld);
-
-            Z80.Reset();
-            Z80.Registers.PC = 0x0100;
-            Z80.Continue();
+            AssembleAndExecute(helloWorldProgram);
         }
 
         [Test]
@@ -373,7 +465,7 @@ DATA: db ""{0}"",0";
                 .BeforeExecutingAt("CHPUT")
                 .Do(context => Debug.Write(Encoding.ASCII.GetString(new[] {context.Z80.Registers.A})))
                 .Do(context => printedChars.Add(context.Z80.Registers.A))
-                .ThenReturn()
+                .ExecuteRet()
                 .ExpectedExactly(message.Length);
             
             AssembleAndExecute(program);

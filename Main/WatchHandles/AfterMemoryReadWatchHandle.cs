@@ -95,7 +95,7 @@ namespace Konamiman.ZTest.WatchHandles
         /// </summary>
         /// <param name="newValue"></param>
         /// <returns></returns>
-        public AfterMemoryReadWatchHandle ThenReplaceObtainedValueWith(byte newValue)
+        public AfterMemoryReadWatchHandle ReplaceObtainedValueWith(byte newValue)
         {
             Callbacks.Add(context => context.Value = newValue);
             return this;
@@ -107,7 +107,7 @@ namespace Konamiman.ZTest.WatchHandles
         /// </summary>
         /// <param name="getNewValue"></param>
         /// <returns></returns>
-        public AfterMemoryReadWatchHandle ThenReplaceObtainedValueWith(Func<AfterMemoryReadContext, byte> getNewValue)
+        public AfterMemoryReadWatchHandle ReplaceObtainedValueWith(Func<AfterMemoryReadContext, byte> getNewValue)
         {
             Callbacks.Add(context => context.Value = getNewValue(context));
             return this;

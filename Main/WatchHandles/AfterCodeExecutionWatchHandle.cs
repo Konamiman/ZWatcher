@@ -94,7 +94,7 @@ namespace Konamiman.ZTest.WatchHandles
         /// Tells that the processor execution must stop after the current instruction finishes its execution.
         /// </summary>
         /// <returns></returns>
-        public AfterCodeExecutionWatchHandle ThenStopExecution()
+        public AfterCodeExecutionWatchHandle StopExecution()
         {
             Callbacks.Add(context => context.MustStop = true);
             return this;

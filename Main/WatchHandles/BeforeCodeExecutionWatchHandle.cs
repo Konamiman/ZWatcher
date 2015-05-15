@@ -95,7 +95,7 @@ namespace Konamiman.ZTest.WatchHandles
         /// Tells that a RET instruction must be executed by the processor after the current instruction is executed.
         /// </summary>
         /// <returns></returns>
-        public BeforeCodeExecutionWatchHandle ThenReturn()
+        public BeforeCodeExecutionWatchHandle ExecuteRet()
         {
             Callbacks.Add(context => context.Z80.ExecuteRet());
             return this;

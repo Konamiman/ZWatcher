@@ -324,5 +324,24 @@ namespace Konamiman.ZTests.Tests
             Z80.Registers.PC = 0x0100;
             Z80.Continue();
         }
+
+        [Test]
+        public void Context_extensions()
+        {
+            Sut
+                .BeforeExecutingAt(0x100)
+                .Do(context => Debug.WriteLine("Let's go!"));
+
+            Sut
+                .BeforeExecutingAt(0x00A2)
+                .Do(context => context.DebugCharAsAcii())
+                .ThenReturn();
+            
+            Z80.Memory.SetContents(0x0100, helloWorld);
+
+            Z80.Reset();
+            Z80.Registers.PC = 0x0100;
+            Z80.Continue();
+        }
     }
 }

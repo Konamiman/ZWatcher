@@ -367,28 +367,45 @@ namespace Konamiman.ZTest
             var address = (ushort)(z80.Registers.PC - e.Opcode.Length);
             var context = new AfterCodeExecutionContext(z80, address, e.Opcode);
             
-            var matched = AfterCodeExecutionWatches.Where(w => w.IsMatch(context));
-            InvokeAllCallbacks(matched, context);
+            InvokeAllCallbacksOnMatchingWatches(AfterCodeExecutionWatches, context);
             if(context.MustStop)
                 e.ExecutionStopper.Stop(false);
         }
 
-        private static void InvokeAllCallbacks<T>(IEnumerable<IWatch<T>> matched, T context)
+        private static void InvokeAllCallbacksOnMatchingWatches<T>(IEnumerable<IWatch<T>> watches, T context)
             where T:IContext
         {
-            foreach (var match in matched)
+            IWatch<T> currentWatch = null;
+            var executingMatchers = true;
+            try
             {
-                match.TimesReached++;
-                context.TimesReached = match.TimesReached;
-                foreach (var callback in match.Callbacks)
+                var matchingWatches = watches
+                    .Where(w => { currentWatch = w; return w.IsMatch(context); })
+                    .ToArray();
+                executingMatchers = false;
+                foreach(var watch in matchingWatches)
                 {
-                    callback(context);
-                    match.TimesReached = context.TimesReached;
-                    var afterExecutionContext = context as AfterCodeExecutionContext;
-                    if(afterExecutionContext?.MustStop == true) {
-                        return;
+                    currentWatch = watch;
+                    watch.TimesReached++;
+                    context.TimesReached = watch.TimesReached;
+                    foreach(var callback in watch.Callbacks)
+                    {
+                        callback(context);
+                        watch.TimesReached = context.TimesReached;
+                        var afterExecutionContext = context as AfterCodeExecutionContext;
+                        if(afterExecutionContext?.MustStop == true)
+                        {
+                            return;
+                        }
                     }
                 }
+            }
+            catch(Exception ex)
+            {
+                var what = executingMatchers ? "the matching delegate" : "one of the callbacks";
+                var message =
+                    $"Unhandled exception when invoking {what} for the watch \"{currentWatch.DisplayName}\": {ex.Message}";
+                throw new WatchExecutionException(message, currentWatch.DisplayName, executingMatchers, context, ex);
             }
         }
 
@@ -399,8 +416,7 @@ namespace Konamiman.ZTest
             var address = (ushort)(z80.Registers.PC - e.Opcode.Length);
             var context = new BeforeCodeExecutionContext(z80, address, e.Opcode);
             
-            var matched = BeforeCodeExecutionWatches.Where(w => w.IsMatch(context));
-            InvokeAllCallbacks(matched, context);
+            InvokeAllCallbacksOnMatchingWatches(BeforeCodeExecutionWatches, context);
         }
 
         #endregion
@@ -413,12 +429,12 @@ namespace Konamiman.ZTest
 
             if(e.EventType == MemoryAccessEventType.AfterMemoryRead) {
                 var context = new AfterMemoryReadContext(z80, e.Address, e.Value);
-                InvokeAllCallbacks(AfterMemoryReadWatches.Where(w => w.IsMatch(context)), context);
+                InvokeAllCallbacksOnMatchingWatches(AfterMemoryReadWatches, context);
                 e.Value = context.Value;
             }
             else if(e.EventType == MemoryAccessEventType.BeforeMemoryRead) {
                 var context = new BeforeMemoryReadContext(z80, e.Address);
-                InvokeAllCallbacks(BeforeMemoryReadWatches.Where(w => w.IsMatch(context)), context);
+                InvokeAllCallbacksOnMatchingWatches(BeforeMemoryReadWatches, context);
                 if(context.Value != null) {
                     e.Value = (byte)context.Value;
                     e.CancelMemoryAccess = true;
@@ -426,11 +442,11 @@ namespace Konamiman.ZTest
             }
             else if(e.EventType == MemoryAccessEventType.AfterMemoryWrite) {
                 var context = new AfterMemoryWriteContext(z80, e.Address, e.Value);
-                InvokeAllCallbacks(AfterMemoryWriteWatches.Where(w => w.IsMatch(context)), context);
+                InvokeAllCallbacksOnMatchingWatches(AfterMemoryWriteWatches, context);
             }
             else if(e.EventType == MemoryAccessEventType.BeforeMemoryWrite) {
                 var context = new BeforeMemoryWriteContext(z80, e.Address, e.Value);
-                InvokeAllCallbacks(BeforeMemoryWriteWatches.Where(w => w.IsMatch(context)), context);
+                InvokeAllCallbacksOnMatchingWatches(BeforeMemoryWriteWatches, context);
                 if(context.Value == null)
                     e.CancelMemoryAccess = true;
                 else 
@@ -439,12 +455,12 @@ namespace Konamiman.ZTest
 
             else if(e.EventType == MemoryAccessEventType.AfterMemoryRead) {
                 var context = new AfterMemoryReadContext(z80, e.Address, e.Value);
-                InvokeAllCallbacks(AfterMemoryReadWatches.Where(w => w.IsMatch(context)), context);
+                InvokeAllCallbacksOnMatchingWatches(AfterMemoryReadWatches, context);
                 e.Value = context.Value;
             }
             else if(e.EventType == MemoryAccessEventType.BeforeMemoryRead) {
                 var context = new BeforeMemoryReadContext(z80, e.Address);
-                InvokeAllCallbacks(BeforeMemoryReadWatches.Where(w => w.IsMatch(context)), context);
+                InvokeAllCallbacksOnMatchingWatches(BeforeMemoryReadWatches, context);
                 if(context.Value != null) {
                     e.Value = (byte)context.Value;
                     e.CancelMemoryAccess = true;
@@ -452,11 +468,11 @@ namespace Konamiman.ZTest
             }
             else if(e.EventType == MemoryAccessEventType.AfterMemoryWrite) {
                 var context = new AfterMemoryWriteContext(z80, e.Address, e.Value);
-                InvokeAllCallbacks(AfterMemoryWriteWatches.Where(w => w.IsMatch(context)), context);
+                InvokeAllCallbacksOnMatchingWatches(AfterMemoryWriteWatches, context);
             }
             else if(e.EventType == MemoryAccessEventType.BeforeMemoryWrite) {
                 var context = new BeforeMemoryWriteContext(z80, e.Address, e.Value);
-                InvokeAllCallbacks(BeforeMemoryWriteWatches.Where(w => w.IsMatch(context)), context);
+                InvokeAllCallbacksOnMatchingWatches(BeforeMemoryWriteWatches, context);
                 if(context.Value == null)
                     e.CancelMemoryAccess = true;
                 else 

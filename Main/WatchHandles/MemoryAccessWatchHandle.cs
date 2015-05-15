@@ -9,7 +9,8 @@ namespace Konamiman.ZTest.WatchHandles
     /// </summary>
     /// <typeparam name="TContext"></typeparam>
     public abstract class MemoryAccessWatchHandle<TContext> 
-        : WatchHandle<TContext> where TContext : MemoryAccessContext
+        : IWatchHandle<TContext> where TContext : MemoryAccessContext
     {
+        public List<Action<TContext>> Callbacks { get; } = new List<Action<TContext>>();
     }
 }

@@ -9,7 +9,8 @@ namespace Konamiman.ZTest.WatchHandles
     /// </summary>
     /// <typeparam name="TContext"></typeparam>
     public abstract class CodeExecutionWatchHandle<TContext> 
-        : WatchHandle<TContext> where TContext : CodeExecutionContext
+        : IWatchHandle<TContext> where TContext : CodeExecutionContext
     {
+        public List<Action<TContext>> Callbacks { get; } = new List<Action<TContext>>();
     }
 }

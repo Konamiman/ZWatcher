@@ -15,5 +15,7 @@ namespace Konamiman.ZTest.Watches
         long MinimumReachesRequired { get; set; }
 
         long MaximumReachesAllowed { get; set; }
+
+        string DisplayName { get; set; }
     }
 }

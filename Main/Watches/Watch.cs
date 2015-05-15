@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Text;
 using Konamiman.ZTest.Contexts;
@@ -13,16 +14,25 @@ namespace Konamiman.ZTest.Watches
         {
             Callbacks = callbacks;
             IsMatch = isMatch;
+            DisplayName = null;
         }
 
         public IEnumerable<Action<T>> Callbacks { get; }
 
         public Func<T, bool> IsMatch { get; }
+        
+        public int TimesReached { get; set; }
 
         public long MinimumReachesRequired { get; set; } = 0;
 
         public long MaximumReachesAllowed { get; set; } = long.MaxValue;
 
-        public int TimesReached { get; set; }
+        private string displayName;
+
+        public string DisplayName
+        {
+            get { return displayName; }
+            set { displayName = value ?? GetType().Name.Replace("Watch", ""); }
+        }
     }
 }

@@ -34,7 +34,7 @@ namespace Konamiman.ZTest.WatchHandles
         /// <returns></returns>
         public BeforeMemoryWriteWatchHandle Named(string name)
         {
-            SetName(name);
+            Watch.DisplayName = name;
             return this;
         }
 

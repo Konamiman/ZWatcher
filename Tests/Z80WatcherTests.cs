@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Text;
 using Konamiman.Z80dotNet;
 using Konamiman.ZTest;
+using Newtonsoft.Json;
 using NUnit.Framework;
 
 namespace Konamiman.ZTests.Tests
@@ -162,6 +163,57 @@ namespace Konamiman.ZTests.Tests
             Z80.Reset();
             Z80.Registers.PC = 0x0100;
             Z80.Continue();
+        }
+
+        [Test]
+        public void Exception_in_matcher()
+        {
+            Sut
+                .BeforeExecuting(context => {throw new Exception("Buh!!");})
+                .Named("Buerh")
+                .ThenReturn();
+
+            Z80.Memory.SetContents(0x0100, helloWorld);
+
+            Z80.Reset();
+            Z80.Registers.PC = 0x0100;
+
+            try
+            {
+                Z80.Continue();
+            }
+            catch(WatchExecutionException ex)
+            {
+                Debug.WriteLine(ex.Message);
+                Debug.WriteLine(ex.WatchName);
+                Debug.WriteLine(ex.WhenExecutingMatcher);
+            }
+        }
+
+        [Test]
+        public void Exception_in_callback()
+        {
+            Sut
+                .BeforeExecuting()
+                .Named("Buerh")
+                .Do(context => {throw new Exception("Buh!!");})
+                .ThenReturn();
+
+            Z80.Memory.SetContents(0x0100, helloWorld);
+
+            Z80.Reset();
+            Z80.Registers.PC = 0x0100;
+
+            try
+            {
+                Z80.Continue();
+            }
+            catch(WatchExecutionException ex)
+            {
+                Debug.WriteLine(ex.Message);
+                Debug.WriteLine(ex.WatchName);
+                Debug.WriteLine(ex.WhenExecutingMatcher);
+            }
         }
     }
 }

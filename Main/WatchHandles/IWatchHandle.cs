@@ -14,10 +14,5 @@ namespace Konamiman.ZTest.WatchHandles
         /// Callbacks to be executed when the condition for the enclosed watch is met.
         /// </summary>
         List<Action<T>> Callbacks { get; }
-
-        /// <summary>
-        /// Display name for the watch.
-        /// </summary>
-        string Name { get; set; }
     }
 }

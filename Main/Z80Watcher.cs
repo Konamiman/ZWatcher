@@ -27,14 +27,17 @@ namespace Konamiman.ZTest
 
         private List<AfterMemoryWriteWatch> AfterPortWriteWatches { get; } = new List<AfterMemoryWriteWatch>();
 
+        private List<BeforeInstructionFetchWatch> BeforeInsructionFetchWatches { get; } = new List<BeforeInstructionFetchWatch>();
+
         private List<BeforeCodeExecutionWatch> BeforeCodeExecutionWatches { get; } = new List<BeforeCodeExecutionWatch>();
 
         private List<AfterCodeExecutionWatch> AfterCodeExecutionWatches { get; } = new List<AfterCodeExecutionWatch>();
 
-        public IDictionary<string, ushort> SymbolsDictionary { get; } = new Dictionary<string, ushort>();
+        public IDictionary<string, ushort> Symbols { get; } = new Dictionary<string, ushort>();
 
         public Z80Watcher(IZ80Processor z80)
         {
+            z80.BeforeInstructionFetch += Z80OnBeforeInstructionFetch;
             z80.BeforeInstructionExecution += Z80OnBeforeInstructionExecution;
             z80.AfterInstructionExecution += Z80OnAfterInstructionExecution;
             z80.MemoryAccess += Z80OnMemoryAccess;
@@ -86,6 +89,47 @@ namespace Konamiman.ZTest
         #endregion
 
         #region Creation of execution handles
+        
+        /// <summary>
+        /// Registers a watch to be evaluated before fetching an instruction.
+        /// </summary>
+        /// <param name="isMatch">Delegate that decides if the current context is a match for the generated watch.</param>
+        /// <returns></returns>
+        public BeforeInstructionFetchWatchHandle BeforeFetchingInstruction(Func<BeforeInstructionFetchContext, bool> isMatch)
+        {
+            var handle = new BeforeInstructionFetchWatchHandle(isMatch);
+            BeforeInsructionFetchWatches.Add(handle.Watch);
+            return handle;
+        }
+
+        /// <summary>
+        /// Registers a watch to be evaluated before fetching an instruction at a given address.
+        /// </summary>
+        /// <param name="address">Instruction address for which the generated watch will be a match.</param>
+        /// <returns></returns>
+        public BeforeInstructionFetchWatchHandle BeforeFetchingInstructionAt(ushort address)
+        {
+            return BeforeFetchingInstruction(context => context.Address == address);
+        }
+
+        /// <summary>
+        /// Registers a watch to be evaluated before fetching an instruction at a given address.
+        /// </summary>
+        /// <param name="address">Name in the symbols dictionary of the instruction address for which the generated watch will be a match.</param>
+        /// <returns></returns>
+        public BeforeInstructionFetchWatchHandle BeforeFetchingInstructionAt(string address)
+        {
+            return BeforeFetchingInstruction(context => context.Address == context.Symbols[address]);
+        }
+
+        /// <summary>
+        /// Registers a watch to be evaluated before fetching any instruction.
+        /// </summary>
+        /// <returns></returns>
+        public BeforeInstructionFetchWatchHandle BeforeFetchingInstruction()
+        {
+            return BeforeFetchingInstruction(context => true);
+        }
 
         /// <summary>
         /// Registers a watch to be evaluated before executing an instruction.
@@ -428,16 +472,12 @@ namespace Konamiman.ZTest
         #endregion
         
         #region Handling instruction execution
-
-        private void Z80OnAfterInstructionExecution(object sender, AfterInstructionExecutionEventArgs e)
+        
+        private void Z80OnBeforeInstructionFetch(object sender, BeforeInstructionFetchEventArgs e)
         {
             var z80 = (IZ80Processor)sender;
-            var address = (ushort)e.LocalUserState;
-            var context = new AfterCodeExecutionContext(z80, address, e.Opcode, SymbolsDictionary);
-            
-            InvokeAllCallbacksOnMatchingWatches(AfterCodeExecutionWatches, context);
-            if(context.MustStop)
-                e.ExecutionStopper.Stop(false);
+            var context = new BeforeInstructionFetchContext(z80, z80.Registers.PC, Symbols);
+            InvokeAllCallbacksOnMatchingWatches(BeforeInsructionFetchWatches, context);
         }
 
         private static void InvokeAllCallbacksOnMatchingWatches<T>(IEnumerable<IWatch<T>> watches, T context)
@@ -458,6 +498,7 @@ namespace Konamiman.ZTest
                     foreach(var callback in watch.Callbacks)
                     {
                         callback(context);
+                        
                         watch.TimesReached = context.TimesReached;
                         var afterExecutionContext = context as AfterCodeExecutionContext;
                         if(afterExecutionContext?.MustStop == true)
@@ -475,12 +516,22 @@ namespace Konamiman.ZTest
             }
         }
 
+        private void Z80OnAfterInstructionExecution(object sender, AfterInstructionExecutionEventArgs e)
+        {
+            var z80 = (IZ80Processor)sender;
+            var address = (ushort)e.LocalUserState;
+            var context = new AfterCodeExecutionContext(z80, address, e.Opcode, Symbols);
+            InvokeAllCallbacksOnMatchingWatches(AfterCodeExecutionWatches, context);
+            if(context.MustStop)
+                e.ExecutionStopper.Stop(false);
+        }
+
         private void Z80OnBeforeInstructionExecution(object sender, BeforeInstructionExecutionEventArgs e)
         {
             var z80 = (IZ80Processor)sender;
             var address = (ushort)(z80.Registers.PC - e.Opcode.Length);
             e.LocalUserState = address;
-            var context = new BeforeCodeExecutionContext(z80, address, e.Opcode, SymbolsDictionary);
+            var context = new BeforeCodeExecutionContext(z80, address, e.Opcode, Symbols);
             
             InvokeAllCallbacksOnMatchingWatches(BeforeCodeExecutionWatches, context);
         }
@@ -494,12 +545,12 @@ namespace Konamiman.ZTest
             var z80 = (IZ80Processor)sender;
 
             if(e.EventType == MemoryAccessEventType.AfterMemoryRead) {
-                var context = new AfterMemoryReadContext(z80, e.Address, e.Value, SymbolsDictionary);
+                var context = new AfterMemoryReadContext(z80, e.Address, e.Value, Symbols);
                 InvokeAllCallbacksOnMatchingWatches(AfterMemoryReadWatches, context);
                 e.Value = context.Value;
             }
             else if(e.EventType == MemoryAccessEventType.BeforeMemoryRead) {
-                var context = new BeforeMemoryReadContext(z80, e.Address, SymbolsDictionary);
+                var context = new BeforeMemoryReadContext(z80, e.Address, Symbols);
                 InvokeAllCallbacksOnMatchingWatches(BeforeMemoryReadWatches, context);
                 if(context.Value != null) {
                     e.Value = (byte)context.Value;
@@ -507,11 +558,11 @@ namespace Konamiman.ZTest
                 }
             }
             else if(e.EventType == MemoryAccessEventType.AfterMemoryWrite) {
-                var context = new AfterMemoryWriteContext(z80, e.Address, e.Value, SymbolsDictionary);
+                var context = new AfterMemoryWriteContext(z80, e.Address, e.Value, Symbols);
                 InvokeAllCallbacksOnMatchingWatches(AfterMemoryWriteWatches, context);
             }
             else if(e.EventType == MemoryAccessEventType.BeforeMemoryWrite) {
-                var context = new BeforeMemoryWriteContext(z80, e.Address, e.Value, SymbolsDictionary);
+                var context = new BeforeMemoryWriteContext(z80, e.Address, e.Value, Symbols);
                 InvokeAllCallbacksOnMatchingWatches(BeforeMemoryWriteWatches, context);
                 if(context.Value == null)
                     e.CancelMemoryAccess = true;
@@ -520,12 +571,12 @@ namespace Konamiman.ZTest
             }
 
             else if(e.EventType == MemoryAccessEventType.AfterPortRead) {
-                var context = new AfterMemoryReadContext(z80, e.Address, e.Value, SymbolsDictionary);
+                var context = new AfterMemoryReadContext(z80, e.Address, e.Value, Symbols);
                 InvokeAllCallbacksOnMatchingWatches(AfterPortReadWatches, context);
                 e.Value = context.Value;
             }
             else if(e.EventType == MemoryAccessEventType.BeforePortRead) {
-                var context = new BeforeMemoryReadContext(z80, e.Address, SymbolsDictionary);
+                var context = new BeforeMemoryReadContext(z80, e.Address, Symbols);
                 InvokeAllCallbacksOnMatchingWatches(BeforePortReadWatches, context);
                 if(context.Value != null) {
                     e.Value = (byte)context.Value;
@@ -533,11 +584,11 @@ namespace Konamiman.ZTest
                 }
             }
             else if(e.EventType == MemoryAccessEventType.AfterPortWrite) {
-                var context = new AfterMemoryWriteContext(z80, e.Address, e.Value, SymbolsDictionary);
+                var context = new AfterMemoryWriteContext(z80, e.Address, e.Value, Symbols);
                 InvokeAllCallbacksOnMatchingWatches(AfterPortWriteWatches, context);
             }
             else if(e.EventType == MemoryAccessEventType.BeforePortWrite) {
-                var context = new BeforeMemoryWriteContext(z80, e.Address, e.Value, SymbolsDictionary);
+                var context = new BeforeMemoryWriteContext(z80, e.Address, e.Value, Symbols);
                 InvokeAllCallbacksOnMatchingWatches(BeforePortWriteWatches, context);
                 if(context.Value == null)
                     e.CancelMemoryAccess = true;

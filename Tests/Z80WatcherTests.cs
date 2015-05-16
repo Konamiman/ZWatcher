@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.SymbolStore;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -53,13 +52,31 @@ DATA: db ""{helloWorld}"",0";
             var printedChars = new List<byte>();
 
             Sut
-                .BeforeExecutingAt("CHPUT")
+                .BeforeFetchingInstructionAt("CHPUT")
                 .Do(context => printedChars.Add(context.Z80.Registers.A))
                 .ExecuteRet();
             
             AssembleAndExecute(helloWorldProgram);
 
             Assert.AreEqual(helloWorld, Encoding.ASCII.GetString(printedChars.ToArray()));
+        }
+
+        [Test]
+        public void Can_act_before_executing_isntruction()
+        {
+            byte[] opcodeBytes = null;
+
+            var program = @"
+ ld a,34h
+ ret";
+
+            Sut
+                .BeforeExecutingAt(0x100)
+                .Do(context => opcodeBytes = context.Opcode);
+            
+            AssembleAndExecute(program);
+
+            Assert.AreEqual(new byte[] {0x3E, 0x34}, opcodeBytes);
         }
 
         [Test]
@@ -94,7 +111,7 @@ DATA: db ""{helloWorld}"",0";
             var printedChars = new List<byte>();
             
             Sut
-                .BeforeExecutingAt("CHPUT")
+                .BeforeFetchingInstructionAt("CHPUT")
                 .Do(context => printedChars.Add(context.Z80.Registers.A))
                 .ExecuteRet();
 
@@ -115,7 +132,7 @@ DATA: db ""{helloWorld}"",0";
             var printedChars = new List<byte>();
             
             Sut
-                .BeforeExecutingAt("CHPUT")
+                .BeforeFetchingInstructionAt("CHPUT")
                 .Do(context => printedChars.Add(context.Z80.Registers.A))
                 .ExecuteRet();
 
@@ -151,7 +168,7 @@ DATA:   db 1,2,3,4
 
             AssembleAndExecute(writeMemoryProgram);
 
-            Assert.AreEqual(new byte[] {1,2,3,4}, Z80.Memory.GetContents(Sut.SymbolsDictionary["DATA"], 4));
+            Assert.AreEqual(new byte[] {1,2,3,4}, Z80.Memory.GetContents(Sut.Symbols["DATA"], 4));
         }
 
         [Test]
@@ -164,7 +181,7 @@ DATA:   db 1,2,3,4
 
             AssembleAndExecute(writeMemoryProgram);
 
-            Assert.AreEqual(new byte[] {11,21,31,41}, Z80.Memory.GetContents(Sut.SymbolsDictionary["DATA"], 4));
+            Assert.AreEqual(new byte[] {11,21,31,41}, Z80.Memory.GetContents(Sut.Symbols["DATA"], 4));
         }
 
         [Test]
@@ -395,7 +412,7 @@ DATA:   db 1,2,3,4
         [Test]
         public void Using_symbols_dictionary()
         {
-            Sut.SymbolsDictionary["CHPUT"] = 0x00A2;
+            Sut.Symbols["CHPUT"] = 0x00A2;
             
             Sut
                 .BeforeExecutingAt(0x100)
@@ -412,7 +429,7 @@ DATA:   db 1,2,3,4
         [Test]
         public void Changing_read_value_using_symbols()
         {
-            Sut.SymbolsDictionary.Add("DATA", 0x010C);
+            Sut.Symbols.Add("DATA", 0x010C);
 
             Sut
                 .BeforeExecuting(context => context.Address == 0x00A2)
@@ -505,7 +522,7 @@ DATA: db ""{0}"",0";
                 var hexValue = 
                     new string(parts[1].Replace("equ","").Where(c => char.IsDigit(c) || (c >= 'A' && c <= 'F')).ToArray());
                 var value = Convert.ToUInt16(hexValue.TrimStart('0'), 16);
-                Sut.SymbolsDictionary[symbol] = value;
+                Sut.Symbols[symbol] = value;
             }
 
             var bytes = File.ReadAllBytes("temp.out");

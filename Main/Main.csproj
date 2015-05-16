@@ -40,6 +40,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Contexts\AfterCodeExecutionContext.cs" />
+    <Compile Include="Contexts\BeforeInstructionFetchContext.cs" />
     <Compile Include="Contexts\BeforeCodeExecutionContext.cs" />
     <Compile Include="Contexts\AfterMemoryReadContext.cs" />
     <Compile Include="Contexts\AfterMemoryWriteContext.cs" />
@@ -48,6 +49,7 @@
     <Compile Include="Contexts\BeforeMemoryReadContext.cs" />
     <Compile Include="Contexts\Context.cs" />
     <Compile Include="Watches\AfterCodeExecutionWatch.cs" />
+    <Compile Include="Watches\BeforeInstructionFetchWatch.cs" />
     <Compile Include="Watches\BeforeCodeExecutionWatch.cs" />
     <Compile Include="Watches\AfterMemoryReadWatch.cs" />
     <Compile Include="Watches\AfterMemoryWriteWatch.cs" />
@@ -59,6 +61,7 @@
     <Compile Include="ExpectationFailedException.cs" />
     <Compile Include="WatchExecutionException.cs" />
     <Compile Include="WatchHandles\AfterCodeExecutionWatchHandle.cs" />
+    <Compile Include="WatchHandles\BeforeInstructionFetchWatchHandle.cs" />
     <Compile Include="WatchHandles\BeforeMemoryWriteWatchHandle.cs" />
     <Compile Include="WatchHandles\AfterMemoryWriteWatchHandle.cs" />
     <Compile Include="WatchHandles\BeforeCodeExecutionWatchHandle.cs" />

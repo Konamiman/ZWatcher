@@ -13,16 +13,10 @@ namespace Konamiman.ZTest.Contexts
         /// </summary>
         public ushort Address { get; }
 
-        /// <summary>
-        /// Bytes that form the opcode that will be or has been executed.
-        /// </summary>
-        public byte[] Opcode { get; }
-        
-        internal CodeExecutionContext(IZ80Processor z80, ushort address, byte[] opcode, IDictionary<string, ushort> symbols) 
+        internal CodeExecutionContext(IZ80Processor z80, ushort address, IDictionary<string, ushort> symbols) 
             : base(z80, symbols)
         {
             this.Address = address;
-            this.Opcode = opcode;
         }
     }
 }

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using Konamiman.Z80dotNet;
 using Konamiman.ZTest;
 using NUnit.Framework;
@@ -29,9 +30,9 @@ namespace Konamiman.ZTests.Tests
             Assert.IsNotNull(Sut);
         }
 
-        
-        private const string helloWorld = "Hello, world!";
+        private const int ProgramAddress = 0x100;
 
+        private const string helloWorld = "Hello, world!";
         private readonly string helloWorldProgram =
             $@"
 CHPUT:  equ 00A2h
@@ -71,12 +72,12 @@ DATA: db ""{helloWorld}"",0";
  ret";
 
             Sut
-                .BeforeExecutingAt(0x100)
+                .BeforeExecutingAt(ProgramAddress)
                 .Do(context => opcodeBytes = context.Opcode);
             
             AssembleAndExecute(program);
 
-            Assert.AreEqual(new byte[] {0x3E, 0x34}, opcodeBytes);
+            Assert.AreEqual(new byte[] { 0x3E, 0x34 }, opcodeBytes);
         }
 
         [Test]
@@ -168,7 +169,7 @@ DATA:   db 1,2,3,4
 
             AssembleAndExecute(writeMemoryProgram);
 
-            Assert.AreEqual(new byte[] {1,2,3,4}, Z80.Memory.GetContents(Sut.Symbols["DATA"], 4));
+            Assert.AreEqual(new byte[] { 1,2,3,4 }, Z80.Memory.GetContents(Sut.Symbols["DATA"], 4));
         }
 
         [Test]
@@ -181,7 +182,7 @@ DATA:   db 1,2,3,4
 
             AssembleAndExecute(writeMemoryProgram);
 
-            Assert.AreEqual(new byte[] {11,21,31,41}, Z80.Memory.GetContents(Sut.Symbols["DATA"], 4));
+            Assert.AreEqual(new byte[] { 11,21,31,41 }, Z80.Memory.GetContents(Sut.Symbols["DATA"], 4));
         }
 
         [Test]
@@ -196,7 +197,7 @@ DATA:   db 1,2,3,4
 
             AssembleAndExecute(writeMemoryProgram);
 
-            Assert.AreEqual(new byte[] {10,20,30,40}, writenValues);
+            Assert.AreEqual(new byte[] { 10,20,30,40 }, writenValues);
         }
 
         private string readPortsProgram =
@@ -375,7 +376,7 @@ DATA: db 0,0,0,0
         {
             Sut
                 .BeforeFetchingInstruction(context => {
-                    if(context.Address == 0x100)
+                    if(context.Address == ProgramAddress)
                         throw new InvalidOperationException("Invalid!!!");
                     return false;
                 });
@@ -383,20 +384,35 @@ DATA: db 0,0,0,0
             var exception = Assert.Throws<WatchExecutionException>(() => AssembleAndExecute(helloWorldProgram));
 
             Assert.IsTrue(exception.WhenExecutingMatcher);
-            Assert.AreEqual(0x100, exception.Context.Address);
+            Assert.AreEqual(ProgramAddress, exception.Context.Address);
         }
 
         [Test]
         public void Exception_in_callback_cause_WatchExecutionException()
         {
             Sut
-                .BeforeFetchingInstructionAt(0x100)
+                .BeforeFetchingInstructionAt(ProgramAddress)
                 .Do(context => { throw new InvalidOperationException("Invalid!!!"); });
 
             var exception = Assert.Throws<WatchExecutionException>(() => AssembleAndExecute(helloWorldProgram));
 
             Assert.IsFalse(exception.WhenExecutingMatcher);
-            Assert.AreEqual(0x100, exception.Context.Address);
+            Assert.AreEqual(ProgramAddress, exception.Context.Address);
+        }
+
+        [Test]
+        public void Can_define_custom_callbacks_with_extension_methods()
+        {
+            Sut
+                .BeforeFetchingInstructionAt("CHPUT")
+                .ExecuteRet();
+
+            Sut
+                .BeforeExecuting()
+                .PrintOpcode()
+                .PrintA();
+
+            AssembleAndExecute(helloWorldProgram);
         }
 
         /// <summary>
@@ -404,7 +420,7 @@ DATA: db 0,0,0,0
         /// </summary>
         /// <param name="program"></param>
         /// <param name="address"></param>
-        private void AssembleAndExecute(string program, ushort address = 0x0100)
+        private void AssembleAndExecute(string program, ushort address = ProgramAddress)
         {
             program = $" org 0{address:X}h\r\n{program}";
 
@@ -422,8 +438,9 @@ DATA: db 0,0,0,0
             
             if(proc.ExitCode != 0) {
                 var output = proc.StandardOutput.ReadToEnd();
-                Debug.WriteLine(output);
-                throw new Exception($"Assembler exited with code {proc.ExitCode}, see program output for details");
+                output = RemoveFirstLine(output);
+                output = Regex.Replace(output, @"temp\.asm\(([0-9]+)\) :", "Line $1 :");
+                Assert.Fail($"Assembly process failed:\r\n\r\n{output}");
             }
 
             var symbolLines = File.ReadAllLines("temp.sym");
@@ -441,6 +458,13 @@ DATA: db 0,0,0,0
             Z80.Reset();
             Z80.Registers.PC = address;
             Z80.Continue();
+        }
+
+        private static string RemoveFirstLine(string output)
+        {
+            return string.Join(
+                Environment.NewLine, 
+                output.Split(new[] { Environment.NewLine }, StringSplitOptions.None).Skip(1).ToArray());
         }
     }
 }

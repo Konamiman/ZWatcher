@@ -490,21 +490,17 @@ namespace Konamiman.ZTest
                     .Where(w => { currentWatch = w; return w.IsMatch(context); })
                     .ToArray();
                 executingMatchers = false;
-                foreach(var watch in matchingWatches)
-                {
+                foreach(var watch in matchingWatches) {
                     currentWatch = watch;
                     watch.TimesReached++;
                     context.TimesReached = watch.TimesReached;
-                    foreach(var callback in watch.Callbacks)
-                    {
+                    foreach(var callback in watch.Callbacks) {
                         callback(context);
                         
                         watch.TimesReached = context.TimesReached;
                         var afterExecutionContext = context as AfterCodeExecutionContext;
                         if(afterExecutionContext?.MustStop == true)
-                        {
                             return;
-                        }
                     }
                 }
             }

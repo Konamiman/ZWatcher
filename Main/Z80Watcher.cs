@@ -557,8 +557,10 @@ namespace Konamiman.ZTest
                     e.CancelMemoryAccess = true;
                 }
             }
-            else if(e.EventType == MemoryAccessEventType.AfterMemoryWrite) {
-                var context = new AfterMemoryWriteContext(z80, e.Address, e.Value, Symbols);
+            else if(e.EventType == MemoryAccessEventType.AfterMemoryWrite)
+            {
+                var value = e.CancelMemoryAccess ? (byte?)null : e.Value;
+                var context = new AfterMemoryWriteContext(z80, e.Address, value, Symbols);
                 InvokeAllCallbacksOnMatchingWatches(AfterMemoryWriteWatches, context);
             }
             else if(e.EventType == MemoryAccessEventType.BeforeMemoryWrite) {
@@ -584,7 +586,8 @@ namespace Konamiman.ZTest
                 }
             }
             else if(e.EventType == MemoryAccessEventType.AfterPortWrite) {
-                var context = new AfterMemoryWriteContext(z80, e.Address, e.Value, Symbols);
+                var value = e.CancelMemoryAccess ? (byte?)null : e.Value;
+                var context = new AfterMemoryWriteContext(z80, e.Address, value, Symbols);
                 InvokeAllCallbacksOnMatchingWatches(AfterPortWriteWatches, context);
             }
             else if(e.EventType == MemoryAccessEventType.BeforePortWrite) {

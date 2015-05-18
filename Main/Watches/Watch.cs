@@ -18,7 +18,7 @@ namespace Konamiman.ZTest.Watches
 
         public Func<T, bool> IsMatch { get; }
         
-        public int TimesReached { get; set; }
+        public long TimesReached { get; set; }
 
         public long MinimumReachesRequired { get; set; } = 0;
 

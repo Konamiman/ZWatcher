@@ -16,7 +16,7 @@ namespace Konamiman.ZTest.Contexts
         /// <summary>
         /// Gets or sets a value that indicates how many times the watch has been reached, including the current one.
         /// </summary>
-        int TimesReached { get; set; }
+        long TimesReached { get; set; }
 
         /// <summary>
         /// The symbols dictionary currently in use.

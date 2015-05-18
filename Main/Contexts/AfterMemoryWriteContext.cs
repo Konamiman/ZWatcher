@@ -10,10 +10,11 @@ namespace Konamiman.ZTest.Contexts
     {
         /// <summary>
         /// Value that has been written to memory or port.
+        /// It will be null if memory access was suppressed.
         /// </summary>
-        public byte Value { get; set; }
+        public byte? Value { get; set; }
 
-        public AfterMemoryWriteContext(IZ80Processor z80, ushort address, byte value, IDictionary<string, ushort> symbols)
+        public AfterMemoryWriteContext(IZ80Processor z80, ushort address, byte? value, IDictionary<string, ushort> symbols)
             : base(z80, address, symbols)
         {
             this.Value = value;

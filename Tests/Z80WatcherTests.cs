@@ -192,13 +192,53 @@ DATA:   db 1,2,3,4
             Sut
                 .AfterWritingMemory(context =>
                     context.Address >= context.Symbols["DATA"])
-                .Do(context => writenValues.Add(context.Value));
+                .Do(context => writenValues.Add((byte)context.Value));
 
             AssembleAndExecute(writeMemoryProgram);
 
             Assert.AreEqual(new byte[] {10,20,30,40}, writenValues);
         }
 
+        private string readPortsProgram =
+            $@"
+ ld ix,DATA
+ in a,(10)
+ ld (ix),a
+ in a,(11)
+ ld (ix+1),a
+ in a,(12)
+ ld (ix+2),a
+ in a,(13)
+ ld (ix+3),a
+ ret
+DATA: db 0,0,0,0
+ ret
+";
+
+        [Test]
+        public void Can_replace_value_read_from_port_before_read()
+        {
+            Sut
+                .BeforeReadingPort(context => context.Address >= 10)
+                .SuppressMemoryAccessAndReturn(context => (byte)context.TimesReached);
+
+            AssembleAndExecute(readPortsProgram);
+
+            Assert.AreEqual(new byte[] { 1,2,3,4 }, Z80.Memory.GetContents(Sut.Symbols["DATA"], 4));
+        }
+
+        [Test]
+        public void Can_replace_value_read_from_port_after_read()
+        {
+            Sut
+                .AfterReadingPort(context => context.Address >= 10)
+                .ReplaceObtainedValueWith(context => (byte)context.TimesReached);
+
+            AssembleAndExecute(readPortsProgram);
+
+            Assert.AreEqual(new byte[] { 1,2,3,4 }, Z80.Memory.GetContents(Sut.Symbols["DATA"], 4));
+        }
+        
         private string writePortsProgram =
             $@"
  ld a,1
@@ -222,6 +262,32 @@ DATA:   db 1,2,3,4
             AssembleAndExecute(writePortsProgram);
 
             Assert.AreEqual(new byte[] {1, 2, 0, 0}, Z80.PortsSpace.GetContents(10, 4));
+        }
+
+        [Test]
+        public void Can_replace_values_written_to_port()
+        {
+            Sut
+                .BeforeWritingPort(context => context.Address >= 10)
+                .ActuallyWrite(context => (byte)(context.Value + 10));
+
+            AssembleAndExecute(writePortsProgram);
+
+            Assert.AreEqual(new byte[] {11, 12, 13, 14}, Z80.PortsSpace.GetContents(10, 4));
+        }
+
+        [Test]
+        public void Can_act_after_writting_to_port()
+        {
+            var writtenValues = new List<byte>();
+
+            Sut
+                .AfterWritingPort(context => context.Address >= 10)
+                .Do(context => writtenValues.Add((byte)context.Value));
+
+            AssembleAndExecute(writePortsProgram);
+
+            Assert.AreEqual(new byte[] {1, 2, 3, 4}, writtenValues);
         }
 
         //WIP...
@@ -271,6 +337,7 @@ DATA:   db 1,2,3,4
         }
 
         [Test]
+        [Explicit]
         public void Changing_read_value_after()
         {
             Sut

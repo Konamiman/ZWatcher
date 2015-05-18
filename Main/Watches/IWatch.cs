@@ -4,13 +4,6 @@ using Konamiman.ZTest.Contexts;
 
 namespace Konamiman.ZTest.Watches
 {
-    internal interface ITimesreachedAware
-    {
-        int TimesReached { get; set; }
-
-        void VerifyRequiredReaches();
-    }
-
     internal interface IWatch<in T> : ITimesreachedAware 
         where T : IContext
     {

@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>$id$</id>
+    <version>$version$</version>
+    <title>$title$</title>
+    <authors>$author$</authors>
+    <owners>$author$</owners>
+    <licenseUrl>https://bitbucket.org/konamiman/zwatcher/src/develop/LICENSE.txt</licenseUrl>
+    <projectUrl>https://bitbucket.org/konamiman/zwatcher</projectUrl>
+    <iconUrl>https://bitbucket.org/konamiman/zwatcher/src/develop/NuGetIcon.jpg</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <summary>$description$</summary>
+    <description>A toolbox to ease unit testing of Z80 code together with Z80.NET</description>
+    <releaseNotes>First version.</releaseNotes>
+    <copyright>Copyright 2015 Konamiman</copyright>
+    <tags>Z80</tags>
+    <dependencies>
+      <dependency id="Z80dotNet" version="1.0.5" />
+    </dependencies>
+  </metadata>
+</package>

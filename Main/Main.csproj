@@ -79,6 +79,7 @@
     <Compile Include="Z80Watcher.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Main.nuspec" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

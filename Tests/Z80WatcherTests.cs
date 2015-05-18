@@ -262,7 +262,7 @@ DATA: db 0,0,0,0
 
             AssembleAndExecute(writePortsProgram);
 
-            Assert.AreEqual(new byte[] {1, 2, 0, 0}, Z80.PortsSpace.GetContents(10, 4));
+            Assert.AreEqual(new byte[] { 1, 2, 0, 0 }, Z80.PortsSpace.GetContents(10, 4));
         }
 
         [Test]
@@ -274,7 +274,7 @@ DATA: db 0,0,0,0
 
             AssembleAndExecute(writePortsProgram);
 
-            Assert.AreEqual(new byte[] {11, 12, 13, 14}, Z80.PortsSpace.GetContents(10, 4));
+            Assert.AreEqual(new byte[] { 11, 12, 13, 14 }, Z80.PortsSpace.GetContents(10, 4));
         }
 
         [Test]
@@ -288,7 +288,7 @@ DATA: db 0,0,0,0
 
             AssembleAndExecute(writePortsProgram);
 
-            Assert.AreEqual(new byte[] {1, 2, 3, 4}, writtenValues);
+            Assert.AreEqual(new byte[] { 1, 2, 3, 4 }, writtenValues);
         }
 
         [Test]
@@ -357,7 +357,7 @@ DATA: db 0,0,0,0
         {
             Sut
                 .BeforeFetchingInstructionAt("CHPUT")
-                .ExpectedBetween(100, 200)
+                .NotExpected()
                 .ExecuteRet()
                 .Named("BeforeCHPUT");
 
@@ -365,9 +365,6 @@ DATA: db 0,0,0,0
 
             var exception = Assert.Throws<ExpectationFailedException>(() => Sut.VerifyAllExpectations());
 
-            Assert.AreEqual(100, exception.MinReachesRequired);
-            Assert.AreEqual(200, exception.MaxReachesRequired);
-            Assert.AreEqual(helloWorld.Length, exception.ActualReaches);
             Assert.AreEqual("BeforeCHPUT", exception.WatchName);
         }
 

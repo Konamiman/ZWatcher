@@ -9,6 +9,11 @@ namespace Konamiman.ZTest.Contexts
     public interface IContext
     {
         /// <summary>
+        /// The memory address or port that will be or has been accessed or executed.
+        /// </summary>
+        ushort Address { get; }
+
+        /// <summary>
         /// The processor object that is performing the execution of Z80 code.
         /// </summary>
         IZ80Processor Z80 { get; }

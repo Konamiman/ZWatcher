@@ -15,23 +15,6 @@ namespace Konamiman.ZTests.Tests
         private Z80Processor Z80 { get; set; }
         private Z80Watcher Sut { get; set; }
 
-        private const string helloWorld = "Hello, world!";
-
-        private readonly string helloWorldProgram =
-            $@"
-CHPUT:  equ 00A2h
-
- ld sp,07000h
- ld hl,DATA
-LOOP: ld a,(hl)
- or a
- ret z
- call CHPUT
- inc hl
- jr LOOP
-
-DATA: db ""{helloWorld}"",0";
-
         [SetUp]
         public void Setup()
         {
@@ -45,6 +28,23 @@ DATA: db ""{helloWorld}"",0";
         {
             Assert.IsNotNull(Sut);
         }
+
+        
+        private const string helloWorld = "Hello, world!";
+
+        private readonly string helloWorldProgram =
+            $@"
+CHPUT:  equ 00A2h
+
+ ld hl,DATA
+LOOP: ld a,(hl)
+ or a
+ ret z
+ call CHPUT
+ inc hl
+ jr LOOP
+
+DATA: db ""{helloWorld}"",0";
 
         [Test]
         public void Can_stub_routines()
@@ -290,300 +290,144 @@ DATA: db 0,0,0,0
             Assert.AreEqual(new byte[] {1, 2, 3, 4}, writtenValues);
         }
 
-        //WIP...
-
-
-
         [Test]
-        public void Before_and_after_instruction_handles()
+        public void Can_inspect_number_of_times_reached()
         {
-            Sut
-                .BeforeExecuting()
-                .Do(context => Debug.WriteLine($"Before: {context.Address:X}, times: {context.TimesReached}"));
+            var printedChars = new List<byte>();
 
             Sut
-                .AfterExecuting()
-                .Do(context => Debug.WriteLine($"After:  {context.Address:X}, times: {context.TimesReached}"));
+                .AfterReadingMemory(context => context.Address >= context.Symbols["DATA"])
+                .Do(context => {
+                    if(context.TimesReached >= 8 && context.TimesReached <= 12)
+                        context.Value = Ascii('*');
+                });
 
             Sut
-                .BeforeExecuting(context => context.Address == 0x00A2)
-                .Do(context => Debug.WriteLine($"--- 00A2: {context.TimesReached} times"))
-                .Do(context => { if(context.TimesReached > 3) context.TimesReached = 0; })
+                .BeforeFetchingInstructionAt("CHPUT")
+                .Do(context => printedChars.Add(context.Z80.Registers.A))
                 .ExecuteRet();
 
             AssembleAndExecute(helloWorldProgram);
+
+            Assert.AreEqual("Hello, *****!", Encoding.ASCII.GetString(printedChars.ToArray()));
         }
 
         [Test]
-        public void Stopping_execution()
+        public void Can_set_and_verify_expectations()
         {
             Sut
-                .AfterExecutingAt(0x103)
-                .StopExecution();
-
-            Sut
-                .BeforeExecuting()
-                .Do(context => Debug.WriteLine($"Before: {context.Address:X}"));
-
-            Sut
-                .AfterExecuting()
-                .Do(context => Debug.WriteLine($"After:  {context.Address:X}"));
-
-            Sut
-                .BeforeExecuting(context => context.Address == 0x00A2)
-                .ExecuteRet();
-
-            AssembleAndExecute(helloWorldProgram);
-        }
-
-        [Test]
-        [Explicit]
-        public void Changing_read_value_after()
-        {
-            Sut
-                .BeforeExecuting(context => context.Address == 0x00A2)
-                .Named("TalYCual")
-                .Do(context => Debug.Write(Encoding.ASCII.GetString(new[] {context.Z80.Registers.A})))
+                .BeforeFetchingInstructionAt("CHPUT")
+                .ExpectedExactly(helloWorld.Length)
                 .ExecuteRet();
 
             Sut
-                .AfterReadingMemory(context => context.Address >= 0x010C)
-                .ReplaceObtainedValueWith(context => (byte)(context.Value + 1));
-
-            AssembleAndExecute(helloWorldProgram);
-        }
-
-        [Test]
-        public void Changing_read_value_before()
-        {
-            Sut
-                .BeforeExecuting(context => context.Address == 0x00A2)
-                .Do(context => Debug.Write(Encoding.ASCII.GetString(new[] {context.Z80.Registers.A})))
-                .ExecuteRet();
+                .BeforeFetchingInstructionAt("LOOP")
+                .ExpectedAtLeast(1);
 
             Sut
-                .BeforeReadingMemory(context => context.Address >= 0x010C)
-                .SuppressMemoryAccessAndReturn(context => (byte)(context.Address & 0xFF));
-
-            AssembleAndExecute(helloWorldProgram);
-        }
-
-        [Test]
-        public void Monitoring_memory_reads()
-        {
-            Sut
-                .BeforeExecuting(context => context.Address == 0x00A2)
-                .ExecuteRet();
-
-            Sut
-                .AfterReadingMemory()
-                .Do(context => Debug.WriteLine($"{context.Address:X} = {context.Value:X}"));
-
-            AssembleAndExecute(helloWorldProgram);
-        }
-
-        [Test]
-        public void Exception_in_matcher()
-        {
-            Sut
-                .BeforeExecuting(context => {throw new Exception("Buh!!");})
-                .Named("Buerh")
-                .ExecuteRet();
-
-            try
-            {
-                AssembleAndExecute(helloWorldProgram);
-            }
-            catch(WatchExecutionException ex)
-            {
-                Debug.WriteLine(ex.Message);
-                Debug.WriteLine(ex.WatchName);
-                Debug.WriteLine(ex.WhenExecutingMatcher);
-            }
-        }
-
-        [Test]
-        public void Exception_in_callback()
-        {
-            Sut
-                .BeforeExecuting()
-                .Named("Buerh")
-                .Do(context => {throw new Exception("Buh!!");})
-                .ExecuteRet();
-
-            try
-            {
-                AssembleAndExecute(helloWorldProgram);
-            }
-            catch(WatchExecutionException ex)
-            {
-                Debug.WriteLine(ex.Message);
-                Debug.WriteLine(ex.WatchName);
-                Debug.WriteLine(ex.WhenExecutingMatcher);
-            }
-
-            Sut.VerifyAllExpectations();
-        }
-
-        [Test]
-        public void Verifying_expectations()
-        {
-            Sut
-                .BeforeExecutingAt(0x00A2)
-                .Named("Buerh")
-                .ExecuteRet()
+                .BeforeFetchingInstructionAt(0xFFFF)
                 .NotExpected();
 
             AssembleAndExecute(helloWorldProgram);
 
-            try
-            {
-                Sut.VerifyAllExpectations();
-            }
-            catch(ExpectationFailedException ex)
-            {
-                Debug.WriteLine(ex.Message);
-                Debug.WriteLine(ex.WatchName);
-                Debug.WriteLine(ex.MinReachesRequired);
-                Debug.WriteLine(ex.MaxReachesRequired);
-            }
-
-            Sut.ResetAllReachCounts();
-
             Sut.VerifyAllExpectations();
         }
 
         [Test]
-        public void Extending_handles()
-        {
-            var handle = Sut
-                .BeforeExecutingAt(0x00A2)
-                .ExecuteRet();
-
-            handle.PrintAddress();
-
-            AssembleAndExecute(helloWorldProgram);
-        }
-
-        [Test]
-        public void Extending_handles_2()
+        public void Unmet_expectations_cause_ExpectationFailedException()
         {
             Sut
-                .BeforeExecutingAt(0x00A2)
-                .PrintAddress2()
+                .BeforeFetchingInstructionAt("CHPUT")
+                .ExpectedBetween(100, 200)
                 .ExecuteRet();
 
             AssembleAndExecute(helloWorldProgram);
+
+            var exception = Assert.Throws<ExpectationFailedException>(() => Sut.VerifyAllExpectations());
+
+            Assert.AreEqual(100, exception.MinReachesRequired);
+            Assert.AreEqual(200, exception.MaxReachesRequired);
+            Assert.AreEqual(helloWorld.Length, exception.ActualReaches);
+            Assert.AreEqual("BeforeInstructionFetch", exception.WatchName);
         }
 
         [Test]
-        public void Using_symbols_dictionary()
-        {
-            Sut.Symbols["CHPUT"] = 0x00A2;
-            
-            Sut
-                .BeforeExecutingAt(0x100)
-                .Do(context => Debug.WriteLine("Let's go!"));
-
-            Sut
-                .BeforeExecutingAt("CHPUT")
-                .Do(context => Debug.Write(Encoding.ASCII.GetString(new[] {context.Z80.Registers.A})))
-                .ExecuteRet();
-            
-            AssembleAndExecute(helloWorldProgram);
-        }
-
-        [Test]
-        public void Changing_read_value_using_symbols()
-        {
-            Sut.Symbols.Add("DATA", 0x010C);
-
-            Sut
-                .BeforeExecuting(context => context.Address == 0x00A2)
-                .Do(context => Debug.Write(Encoding.ASCII.GetString(new[] {context.Z80.Registers.A})))
-                .ExecuteRet();
-
-            Sut
-                .BeforeReadingMemory(context => context.Address >= context.Symbols["DATA"])
-                .SuppressMemoryAccessAndReturn(context => (byte)(context.Address & 0xFF));
-
-            AssembleAndExecute(helloWorldProgram);
-        }
-
-        [Test]
-        public void Context_extensions()
+        public void Can_name_watches_to_help_troubleshooting_problems()
         {
             Sut
-                .BeforeExecutingAt(0x100)
-                .Do(context => Debug.WriteLine("Let's go!"));
-
-            Sut
-                .BeforeExecutingAt(0x00A2)
-                .Do(context => context.DebugCharAsAcii())
-                .ExecuteRet();
-            
-            AssembleAndExecute(helloWorldProgram);
-        }
-
-        [Test]
-        public void Character_print_loop()
-        {
-            var message = "Esto mola mucho!";
-            var printedChars = new List<byte>();
-
-            var program =@"
-CHPUT:  equ 00A2h
-
- ld hl,DATA
-LOOP: ld a,(hl)
- or a
- ret z
- call CHPUT
- inc hl
- jr LOOP
-
-DATA: db ""{0}"",0";
-            program = string.Format(program, message);
-
-            Sut
-                .BeforeExecutingAt("CHPUT")
-                .Do(context => Debug.Write(Encoding.ASCII.GetString(new[] {context.Z80.Registers.A})))
-                .Do(context => printedChars.Add(context.Z80.Registers.A))
+                .BeforeFetchingInstructionAt("CHPUT")
+                .ExpectedBetween(100, 200)
                 .ExecuteRet()
-                .ExpectedExactly(message.Length);
-            
-            AssembleAndExecute(program);
+                .Named("BeforeCHPUT");
 
-            Sut.VerifyAllExpectations();
+            AssembleAndExecute(helloWorldProgram);
 
-            Assert.AreEqual(message, Encoding.ASCII.GetString(printedChars.ToArray()));
+            var exception = Assert.Throws<ExpectationFailedException>(() => Sut.VerifyAllExpectations());
+
+            Assert.AreEqual(100, exception.MinReachesRequired);
+            Assert.AreEqual(200, exception.MaxReachesRequired);
+            Assert.AreEqual(helloWorld.Length, exception.ActualReaches);
+            Assert.AreEqual("BeforeCHPUT", exception.WatchName);
         }
 
+        [Test]
+        public void Exception_in_watch_matcher_cause_WatchExecutionException()
+        {
+            Sut
+                .BeforeFetchingInstruction(context => {
+                    if(context.Address == 0x100)
+                        throw new InvalidOperationException("Invalid!!!");
+                    return false;
+                });
+
+            var exception = Assert.Throws<WatchExecutionException>(() => AssembleAndExecute(helloWorldProgram));
+
+            Assert.IsTrue(exception.WhenExecutingMatcher);
+            Assert.AreEqual(0x100, exception.Context.Address);
+        }
+
+        [Test]
+        public void Exception_in_callback_cause_WatchExecutionException()
+        {
+            Sut
+                .BeforeFetchingInstructionAt(0x100)
+                .Do(context => { throw new InvalidOperationException("Invalid!!!"); });
+
+            var exception = Assert.Throws<WatchExecutionException>(() => AssembleAndExecute(helloWorldProgram));
+
+            Assert.IsFalse(exception.WhenExecutingMatcher);
+            Assert.AreEqual(0x100, exception.Context.Address);
+        }
+
+        /// <summary>
+        /// Assembles the specified Z80 source, loads it at the specified address, and executes it.
+        /// </summary>
+        /// <param name="program"></param>
+        /// <param name="address"></param>
         private void AssembleAndExecute(string program, ushort address = 0x0100)
         {
             program = $" org 0{address:X}h\r\n{program}";
 
             File.WriteAllText("temp.asm", program);
-            var psi = new ProcessStartInfo("sjasm.exe", "-s temp.asm")
-            {
+
+            var startInfo = new ProcessStartInfo("sjasm.exe", "-s temp.asm") {
                 CreateNoWindow = true,
                 RedirectStandardOutput = true,
                 UseShellExecute = false
             };
             var proc = new Process();
-            proc.StartInfo = psi;
+            proc.StartInfo = startInfo;
             proc.Start();
             proc.WaitForExit();
-
-            var output = proc.StandardOutput.ReadToEnd();
-            Debug.WriteLine(output);
-
-            if(proc.ExitCode != 0)
-                throw new InvalidOperationException($"Assembler exited with code {proc.ExitCode}");
+            
+            if(proc.ExitCode != 0) {
+                var output = proc.StandardOutput.ReadToEnd();
+                Debug.WriteLine(output);
+                throw new Exception($"Assembler exited with code {proc.ExitCode}, see program output for details");
+            }
 
             var symbolLines = File.ReadAllLines("temp.sym");
-            foreach(var line in symbolLines)
-            {
+            foreach(var line in symbolLines) {
                 var parts = line.Split(':');
                 var symbol = parts[0];
                 var hexValue = 

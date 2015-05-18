@@ -6,6 +6,7 @@ namespace Konamiman.ZTest.Contexts
 {
     public abstract class Context : IContext
     {
+        public ushort Address { get; internal set; }
         public IZ80Processor Z80 { get; }
         public long TimesReached { get; set; }
         public IDictionary<string, ushort> Symbols { get; }

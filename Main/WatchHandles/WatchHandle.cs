@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using Konamiman.ZTest.Contexts;
+using Konamiman.ZWatcher.Contexts;
 
-namespace Konamiman.ZTest.WatchHandles
+namespace Konamiman.ZWatcher.WatchHandles
 {
     public class WatchHandle<T> : IWatchHandle<T> 
         where T : IContext

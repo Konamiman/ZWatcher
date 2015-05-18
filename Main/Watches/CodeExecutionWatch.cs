@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using Konamiman.ZTest.Contexts;
+using Konamiman.ZWatcher.Contexts;
 
-namespace Konamiman.ZTest.Watches
+namespace Konamiman.ZWatcher.Watches
 {
     internal abstract class CodeExecutionWatch<T> 
         : Watch<T> where T : CodeExecutionContext

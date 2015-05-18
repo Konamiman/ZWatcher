@@ -1,6 +1,6 @@
-﻿using Konamiman.ZTest.Contexts;
+﻿using Konamiman.ZWatcher.Contexts;
 
-namespace Konamiman.ZTest.WatchHandles
+namespace Konamiman.ZWatcher.WatchHandles
 {
     /// <summary>
     /// Base class for all code execution related watch handles.

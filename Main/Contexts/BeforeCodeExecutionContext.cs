@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Konamiman.Z80dotNet;
 
-namespace Konamiman.ZTest.Contexts
+namespace Konamiman.ZWatcher.Contexts
 {
     /// <summary>
     /// Represents the state of the Z80 simulation before an instruction is executed.

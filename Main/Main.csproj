@@ -7,8 +7,8 @@
     <ProjectGuid>{40F0F95E-2F99-441A-86DD-F12923BFAB66}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Konamiman.ZTest</RootNamespace>
-    <AssemblyName>ZTest</AssemblyName>
+    <RootNamespace>Konamiman.ZWatcher</RootNamespace>
+    <AssemblyName>ZWatcher</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>

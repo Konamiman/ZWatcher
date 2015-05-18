@@ -10,7 +10,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{FA1C8A73-4CCB-4319-A3AA-9B16905033E6}"
 	ProjectSection(SolutionItems) = preProject
 		LICENSE.txt = LICENSE.txt
-		..\..\..\Users\nsoriano\Pictures\NuGetIcon.jpg = ..\..\..\Users\nsoriano\Pictures\NuGetIcon.jpg
+		NuGetIcon.jpg = NuGetIcon.jpg
 		README.md = README.md
 	EndProjectSection
 EndProject

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Konamiman.Z80dotNet;
 
-namespace Konamiman.ZTest.Contexts
+namespace Konamiman.ZWatcher.Contexts
 {
     /// <summary>
     /// Base interface for all context classes.

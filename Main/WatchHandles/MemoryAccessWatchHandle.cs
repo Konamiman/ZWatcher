@@ -1,6 +1,6 @@
-﻿using Konamiman.ZTest.Contexts;
+﻿using Konamiman.ZWatcher.Contexts;
 
-namespace Konamiman.ZTest.WatchHandles
+namespace Konamiman.ZWatcher.WatchHandles
 {
     /// <summary>
     /// Base class for all memory and ports access related watch handles.

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using Konamiman.ZTest.Contexts;
+using Konamiman.ZWatcher.Contexts;
 
-namespace Konamiman.ZTest.Watches
+namespace Konamiman.ZWatcher.Watches
 {
     internal interface IWatch<in T> : ITimesreachedAware 
         where T : IContext

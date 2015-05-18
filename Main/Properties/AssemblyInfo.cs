@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("ZWatcher")]
 [assembly: AssemblyDescription("A toolbox to ease unit testing of Z80 code together with Z80.NET")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("Konamiman")]
 [assembly: AssemblyProduct("ZWatcher")]
 [assembly: AssemblyCopyright("Copyright © Konamiman 2015")]
 [assembly: AssemblyTrademark("")]

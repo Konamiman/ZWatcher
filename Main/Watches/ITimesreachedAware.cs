@@ -1,4 +1,4 @@
-﻿namespace Konamiman.ZTest.Watches
+﻿namespace Konamiman.ZWatcher.Watches
 {
     internal interface ITimesreachedAware
     {

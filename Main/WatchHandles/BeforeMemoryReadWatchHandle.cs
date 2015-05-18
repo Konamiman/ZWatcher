@@ -1,8 +1,8 @@
 ﻿using System;
-using Konamiman.ZTest.Contexts;
-using Konamiman.ZTest.Watches;
+using Konamiman.ZWatcher.Contexts;
+using Konamiman.ZWatcher.Watches;
 
-namespace Konamiman.ZTest.WatchHandles
+namespace Konamiman.ZWatcher.WatchHandles
 {
     /// <summary>
     /// Represents a handle for a watch that fires before certain memory address or port is read.

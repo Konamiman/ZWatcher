@@ -1,8 +1,8 @@
 ﻿using System.Diagnostics;
 using System.Text;
-using Konamiman.ZTest.Contexts;
+using Konamiman.ZWatcher.Contexts;
 
-namespace Konamiman.ZTests.Tests
+namespace Konamiman.ZWatcher.Tests
 {
     public static class ContextExtensions
     {

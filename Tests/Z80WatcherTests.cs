@@ -6,10 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Konamiman.Z80dotNet;
-using Konamiman.ZTest;
 using NUnit.Framework;
 
-namespace Konamiman.ZTests.Tests
+namespace Konamiman.ZWatcher.Tests
 {
     public class Z80WatcherTests
     {

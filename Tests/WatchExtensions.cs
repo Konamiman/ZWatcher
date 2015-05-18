@@ -1,8 +1,8 @@
 ﻿using System.Diagnostics;
-using Konamiman.ZTest.Contexts;
-using Konamiman.ZTest.WatchHandles;
+using Konamiman.ZWatcher.Contexts;
+using Konamiman.ZWatcher.WatchHandles;
 
-namespace Konamiman.ZTests.Tests
+namespace Konamiman.ZWatcher.Tests
 {
     public static class WatchHandleExtensions
     {

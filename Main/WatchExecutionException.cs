@@ -1,7 +1,7 @@
 ﻿using System;
-using Konamiman.ZTest.Contexts;
+using Konamiman.ZWatcher.Contexts;
 
-namespace Konamiman.ZTest
+namespace Konamiman.ZWatcher
 {
     public class WatchExecutionException : Exception
     {

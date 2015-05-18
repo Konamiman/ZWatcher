@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Konamiman.ZTest
+namespace Konamiman.ZWatcher
 {
     public class ExpectationFailedException : Exception
     {

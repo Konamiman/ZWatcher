@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Konamiman.Z80dotNet;
-using Konamiman.ZTest.Contexts;
-using Konamiman.ZTest.Watches;
-using Konamiman.ZTest.WatchHandles;
+using Konamiman.ZWatcher.Contexts;
+using Konamiman.ZWatcher.Watches;
+using Konamiman.ZWatcher.WatchHandles;
 
-namespace Konamiman.ZTest
+namespace Konamiman.ZWatcher
 {
     public class Z80Watcher
     {

@@ -79,11 +79,35 @@ The `Z80Watcher` class contains a collection of methods for creating watches. Th
 
 These methods accept a *matcher* in the constructor. A matcher is a delegate that gets a *context* object and returns true if the desired (being watched) condition is fulfilled, or false otherwise. The context object contains the current Z80 memory address, the instance of the Z80 processor being watched, the current instruction opcode bytes (for code execution watches) and the  value involved in the read/write operation (for memory and port access watches).
 
-The return value for the watch creation methods is a *watch handle* that you can use to register callbacks for the watcher. A callback is a delegate that gets a same context object (the same instance, in fact, that is passed to the matching delegate) and returns nothing. You can register as many callbacks as you want for the same watcher, and each callback can do anything, from simply displaying debug information to modifying the internal Z80 state (tipically the memory or registers contents).
+The return value for the watch creation methods is a *watch handle* that you can use to register *callbacks* for the watcher. A callback is a delegate that gets a same context object (the same instance, in fact, that is passed to the matching delegate) and returns nothing. You can register as many callbacks as you want for the same watcher, and each callback can do anything, from simply displaying debug information to modifying the internal Z80 state (tipically the memory or registers contents).
 
 Callbacks are added primarily by using the `Do` method provided by the watcher, but there are too some helper methods that create callbacks in a more readable way. For example, the handle returned by `BeforeWritingMemory` has a `ActuallyWrite(newValue)` method that is equivalent to `Do(context => context.Value = newValue)`.
 
-All the callbacks for a watcher are invoked in the order in which they are created and get the same instance of the context object.
+All the public methods of the watch handlers return a reference to the handler itself, so that it is possible to chain several callback creations in a fluent interface. This is shown in the "Hello, world" example above; the same version without using the fluent interface would be as follows:
+
+```
+#!csharp
+var handler = watcher.BeforeFetchingInstructionAt("CHPUT");
+handler.Do(context => Console.Write(Encoding.ASCII.GetString(new[] {context.Z80.Registers.A})));
+handler.ExecuteRet();
+handler.ExpectedExactly(message.Length - 1);
+```
+
+### Watch evaluation and execution under the hood ###
+
+The following pseudocode shows the procedure followed by ZWatcher when a code execution or memory access event is fired by the watched `Z80Processor` class:
+
+```
+#!csharp
+var context = new Context(address, Z80, others)
+var matchingWatches = watchesForThisEvent.Where(watch => watch.IsMatch(context))
+foreach(var watch in matchingWatches)
+    watch.TimesReached++
+    foreach(callback in watch.Callbacks)
+	    callback(context)
+```
+
+As you can see, all the watches and its callbacks share a common context object. It is also worth notin that watches are evaluated in the order in which they are declared, and the same applies for the callbacks for each watch.
 
 TO DO...
 

@@ -4,9 +4,9 @@
 
 ZWatcher is a small component that sits around [a simulated Z80 processor](https://bitbucket.org/konamiman/z80dotnet) and allows to create a set of *watchers*, each of which will awake when a certain condition is met and will then invoke one or more callbacks. Under the hood this is done by subscribing to the various code execution and memory access events provided by Z80.NET.
 
-ZWatcher has been developed as a tool that allows developing unit tests for Z80 code, however it can be useful to develop emulators as well, as a higher level alternative to the aforementioned Z80.NET's code execution and memory access events.
+ZWatcher has been developed as a tool to help in the development of unit tests for Z80 code, however it can be useful to develop emulators as well, as a higher level alternative to the aforementioned Z80.NET's code execution and memory access events.
 
-ZWatcher is available [as a NuGet package](https://bitbucket.org/konamiman/zwatcher) as well. Installing the ZWatcher package will install Z80.NET as well.
+ZWatcher is available [as a NuGet package](https://www.nuget.org/packages/ZWatcher) as well. Installing the ZWatcher package will install also Z80.NET, on which it depends.
 
 ## Hello, world! ##
 
@@ -66,7 +66,7 @@ namespace ZWatcherHelloWorld
 
 First you create an instance of the `Z80Processor` class and configure it as appropriate (see the [Z80.NET](https://bitbucket.org/konamiman/z80dotnet)'s documentation). Then you create an instance of `Z80Watcher` passing the Z80 class as a constructor parameter. This class is the entry point for all the functionality provided by ZWatcher.
 
-The `Z80Watcher` class contains a collection of methods for creating watches. There is one method for each type of watch, depending on what type of Z80 event is being wathed. Their names should be self-explanatory:
+The `Z80Watcher` class contains a collection of methods for creating watches. There is one method for each type of watch, depending on what type of Z80 event is being watched. The method names should be self-explanatory:
 
 * `BeforeFetchingInstruction`
 * `BeforeExecuting`
@@ -82,9 +82,9 @@ The `Z80Watcher` class contains a collection of methods for creating watches. Th
 
 These methods accept a *matcher* in the constructor. A matcher is a delegate that gets a *context* object and returns true if the desired (being watched) condition is fulfilled, or false otherwise. The context object contains the current Z80 memory address, the instance of the Z80 processor being watched, the current instruction opcode bytes (for code execution watches) and the  value involved in the read/write operation (for memory and port access watches).
 
-The return value for the watch creation methods is a *watch handle* that you can use to register *callbacks* for the watcher. A callback is a delegate that gets a same context object (the same instance, in fact, that is passed to the matching delegate) and returns nothing. You can register as many callbacks as you want for the same watcher, and each callback can do anything, from simply displaying debug information to modifying the internal Z80 state (tipically the memory or registers contents).
+The return value for the watch creation methods is a *watch handle* that you can use to register *callbacks* for the watcher. A callback is a delegate that gets a context object (the same instance, actually, that is passed to the matching delegate) and returns nothing. You can register as many callbacks as you want for the same watcher, and each callback can do anything, from simply displaying debug information to modifying the internal Z80 state (tipically the memory or registers contents).
 
-Callbacks are added primarily by using the `Do` method provided by the watcher, but there are too some helper methods that create callbacks in a more readable way. For example, the handle returned by `BeforeWritingMemory` has a `ActuallyWrite(newValue)` method that is equivalent to `Do(context => context.Value = newValue)`.
+Callbacks are added primarily by using the `Do` method provided by the handler, but there are also some helper methods that create callbacks in a more readable way. For example, the handle returned by `BeforeWritingMemory` has a `ActuallyWrite(newValue)` method that is equivalent to `Do(context => context.Value = newValue)`.
 
 All the public methods of the watch handlers return a reference to the handler itself, so that it is possible to chain several callback creations in a fluent interface. This is shown in the "Hello, world" example above; the same version without using the fluent interface would be as follows:
 
@@ -118,12 +118,12 @@ As you can see, all the watches and its callbacks share a common context object.
 
 Each declared watch contains an internal counter of how many times the watch condition has been fulfilled (and thus its callbacks executed). This counter is included in the context, so that the matching delegate and the callbacks can check it and act depending on its value. However a much more powerful option is to define *expectations* for the number of times a watcher is reached, that can be verified all at once after the Z80 code execution has finished. (A watcher is considered to be 'reached' when its matching delegate is executed and it returns true)
 
-You define an expectation by using one of the "Expected" methods exposed the watch handles. There are several versions of the method available, depending on the type of expectation:
+You define an expectation by using one of the "Expected" methods exposed by the watch handles. There are several versions of the method available, depending on the type of expectation:
 
 * `ExpectedBetween(minTimes, maxTimes)`
 * `ExpectedAtLeast(minTimes)`
 * `ExpectedExactly(exactTimes)`
-* `Expected`- Equivalent to `ExpectedAtLeast(1)`
+* `Expected` - Equivalent to `ExpectedAtLeast(1)`
 * `NotExpected` - Equivalent to `ExpectedExactly(0)`
 
 The `ZWatcher` class exposes a `VerifyAllExpectations` method that loops through all watches comparing the number of times reached against the defined expectation for each watch. When it finds one that has been reached too few or too many times, it throws an `ExpectationFailedException`. If you are using a unit testing framework, this will cause the test to fail.

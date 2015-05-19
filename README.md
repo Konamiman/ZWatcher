@@ -59,6 +59,24 @@ namespace ZWatcherHelloWorld
 }
 ```
 
+## How to use ##
+
+First you create an instance of the `Z80Processor` class and configure it as appropriate (see the [Z80.NET](https://bitbucket.org/konamiman/z80dotnet)'s documentation). The you create an instance of `Z80Watcher` passing the Z80 class as a constructor parameter. This class is the entry point for all the functionality provided by ZWatcher.
+
+The `Z80Watcher` class contains a collection of methods for creating watches. There is one method for each type of watch, depending on what type of Z80 event is being wathed. Their names should be self-explanatory:
+
+* `BeforeFetchingInstruction`
+* `BeforeExecuting`
+* `AfterExecuting`
+* `BeforeReadingMemory`
+* `AfterReadingMemory`
+* `BeforeWritingMemory`
+* `AfterWritingMemory`
+* `BeforeReadingPort`
+* `AfterReadingPort`
+* `BeforeWritingPort`
+* `AfterWritingPort`
+
 TO DO...
 
 ## Last but not least...

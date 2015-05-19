@@ -62,7 +62,7 @@ DATA: db ""{helloWorld}"",0";
         }
 
         [Test]
-        public void Can_act_before_executing_isntruction()
+        public void Can_act_before_executing_instruction()
         {
             byte[] opcodeBytes = null;
 

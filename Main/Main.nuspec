@@ -6,8 +6,8 @@
     <title>$title$</title>
     <authors>$author$</authors>
     <owners>$author$</owners>
-    <licenseUrl>https://bitbucket.org/konamiman/zwatcher/src/default/LICENSE.txt</licenseUrl>
-    <projectUrl>https://bitbucket.org/konamiman/zwatcher</projectUrl>
+    <licenseUrl>https://github.com/Konamiman/ZWatcher/blob/master/LICENSE.txt</licenseUrl>
+    <projectUrl>https://github.com/Konamiman/ZWatcher</projectUrl>
     <iconUrl>https://bitbucket.org/konamiman/zwatcher/raw/ab3edb285f062f1d5112a24f1b5ed290e3b9308c/NuGetIcon.jpg</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <summary>$description$</summary>

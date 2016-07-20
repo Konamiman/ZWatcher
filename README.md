@@ -2,7 +2,7 @@
 
 ## What is this? ##
 
-ZWatcher is a small component that sits around [a simulated Z80 processor](https://bitbucket.org/konamiman/z80dotnet) and allows to create a set of *watchers*, each of which will awake when a certain condition is met and will then invoke one or more callbacks. Under the hood this is done by subscribing to the various code execution and memory access events provided by Z80.NET.
+ZWatcher is a small component that sits around [a simulated Z80 processor](https://github.com/Konamiman/Z80dotNet) and allows to create a set of *watchers*, each of which will awake when a certain condition is met and will then invoke one or more callbacks. Under the hood this is done by subscribing to the various code execution and memory access events provided by Z80.NET.
 
 ZWatcher has been developed as a tool to help in the development of unit tests for Z80 code, however it can be useful to develop emulators as well, as a higher level alternative to the aforementioned Z80.NET's code execution and memory access events.
 
@@ -64,7 +64,7 @@ namespace ZWatcherHelloWorld
 
 ## How to use ##
 
-First you create an instance of the `Z80Processor` class and configure it as appropriate (see the [Z80.NET](https://bitbucket.org/konamiman/z80dotnet)'s documentation). Then you create an instance of `Z80Watcher` passing the Z80 class as a constructor parameter. This class is the entry point for all the functionality provided by ZWatcher.
+First you create an instance of the `Z80Processor` class and configure it as appropriate (see the [Z80.NET](https://github.com/Konamiman/Z80dotNet)'s documentation). Then you create an instance of `Z80Watcher` passing the Z80 class as a constructor parameter. This class is the entry point for all the functionality provided by ZWatcher.
 
 The `Z80Watcher` class contains a collection of methods for creating watches. There is one method for each type of watch, depending on what type of Z80 event is being watched. The method names should be self-explanatory:
 
@@ -140,12 +140,12 @@ By default, the name of a watch reflects its type, such as `AfterCodeExecution` 
 
 ## Learning more ##
 
-From here the best way to continue learning about the power of ZWatcher is to take a look at [the unit tests in the source code repository](https://bitbucket.org/konamiman/zwatcher/src/default/Tests/Z80WatcherTests.cs). There you will also see a nice example of how to compile Z80 source code on the fly by using an external assembler ([Sjasm](http://home.online.nl/~smastijn/sjasm.html) in this case).
+From here the best way to continue learning about the power of ZWatcher is to take a look at [the unit tests in the source code repository](Tests/Z80WatcherTests.cs). There you will also see a nice example of how to compile Z80 source code on the fly by using an external assembler ([Sjasm](http://home.online.nl/~smastijn/sjasm.html) in this case).
 
 
 ## Last but not least... ##
 
-...if you like this project **[please consider donating!](http://www.konamiman.com#donate)** My kids need moar shoes!
+...if you like this project **[please consider donating!](http://www.konamiman.com/msx/msx-e.html#donate)** My kids need moar shoes!
 
 ## But who am I? ##
 

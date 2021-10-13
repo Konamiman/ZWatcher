@@ -10,8 +10,7 @@ ZWatcher is available [as a NuGet package](https://www.nuget.org/packages/ZWatch
 
 ## Hello, world! ##
 
-```
-#!csharp
+```csharp
 using System;
 using System.Linq;
 using System.Text;
@@ -88,8 +87,7 @@ Callbacks are added primarily by using the `Do` method provided by the handler, 
 
 All the public methods of the watch handlers return a reference to the handler itself, so that it is possible to chain several callback creations in a fluent interface. This is shown in the "Hello, world" example above; the same version without using the fluent interface would be as follows:
 
-```
-#!csharp
+```csharp
 var handler = watcher.BeforeFetchingInstructionAt("CHPUT");
 handler.Do(context => Console.Write(
     Encoding.ASCII.GetString(new[] {context.Z80.Registers.A})));
@@ -101,8 +99,7 @@ handler.ExpectedExactly(message.Length - 1);
 
 The following pseudocode shows the procedure followed by ZWatcher when a code execution or memory access event is fired by the watched `Z80Processor` class:
 
-```
-#!csharp
+```csharp
 var context = new Context(address, Z80, others)
 var matchingWatches = watchesForThisEvent.Where(watch => watch.IsMatch(context))
 foreach(var watch in matchingWatches)

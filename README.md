@@ -2,7 +2,7 @@
 
 ## What is this? ##
 
-ZWatcher is a small component that sits around [a simulated Z80 processor](https://github.com/Konamiman/Z80dotNet) and allows to create a set of *watchers*, each of which will awake when a certain condition is met and will then invoke one or more callbacks. Under the hood this is done by subscribing to the various code execution and memory access events provided by Z80.NET.
+ZWatcher is a small component that sits around a simulated Z80 processor ([Z80.NET](https://github.com/Konamiman/Z80dotNet)) and allows to create a set of *watchers*, each of which will awake when a certain condition is met and will then invoke one or more callbacks; under the hood this is done by subscribing to the various code execution and memory access events provided by Z80.NET. It is written in C# and since version 1.1 it targets [.NET Standard 2.0](https://learn.microsoft.com/en-us/dotnet/standard/net-standard?tabs=net-standard-2-0), so it can be used with .NET Framework 4.6.1+ and .NET/.NET Core 2.0+.
 
 ZWatcher has been developed as a tool to help in the development of unit tests for Z80 code, however it can be useful to develop emulators as well, as a higher level alternative to the aforementioned Z80.NET's code execution and memory access events.
 
@@ -140,12 +140,13 @@ By default, the name of a watch reflects its type, such as `AfterCodeExecution` 
 
 ## Learning more ##
 
-From here the best way to continue learning about the power of ZWatcher is to take a look at [the unit tests in the source code repository](Tests/Z80WatcherTests.cs). There you will also see a nice example of how to compile Z80 source code on the fly by using an external assembler ([Sjasm](http://home.online.nl/~smastijn/sjasm.html) in this case).
+From here the best way to continue learning about the power of ZWatcher is to take a look at [the unit tests in the source code repository](Tests/Z80WatcherTests.cs). There you will also see a nice example of how to combine [Nestor80](https://github.com/Konamiman/Nestor80), Z80.NET and ZWatcher to test Z80 source code.
 
 
 ## Last but not least... ##
 
 ...if you like this project **[please consider donating!](http://www.konamiman.com/msx/msx-e.html#donate)** My kids need moar shoes!
+
 
 ## But who am I? ##
 

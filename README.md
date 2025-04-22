@@ -38,18 +38,18 @@ namespace ZWatcherHelloWorld
                 0xCD, 0xA2, 0x00,  //CALL CHPUT
                 0x23,              //INC HL
                 0x18, 0xF7         //JR LOOP
-				                   //data: db ...
+                                   //data: db ...
             };
             var message = "Hello, world!\0";
             var messageBytes = Encoding.ASCII.GetBytes(message);
 
             z80.Memory.SetContents(
-			    0, programBytes.Concat(messageBytes).ToArray());
+                0, programBytes.Concat(messageBytes).ToArray());
 
             watcher
                 .BeforeFetchingInstructionAt("CHPUT")
                 .Do(context => Console.Write(
-				    Encoding.ASCII.GetString(new[] {context.Z80.Registers.A})))
+                    Encoding.ASCII.GetString(new[] {context.Z80.Registers.A})))
                 .ExecuteRet()
                 .ExpectedExactly(message.Length - 1);
 
@@ -105,7 +105,7 @@ var matchingWatches = watchesForThisEvent.Where(watch => watch.IsMatch(context))
 foreach(var watch in matchingWatches)
     watch.TimesReached++
     foreach(callback in watch.Callbacks)
-	    callback(context)
+        callback(context)
 ```
 
 As you can see, all the watches and its callbacks share a common context object. It is also worth noting that watches are evaluated in the order in which they are declared, and the same applies for the callbacks for each watch.

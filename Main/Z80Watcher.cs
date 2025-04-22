@@ -496,7 +496,7 @@ namespace Konamiman.ZWatcher
                     context.TimesReached = watch.TimesReached;
                     foreach(var callback in watch.Callbacks) {
                         callback(context);
-                        
+
                         watch.TimesReached = context.TimesReached;
                         var afterExecutionContext = context as AfterCodeExecutionContext;
                         if(afterExecutionContext?.MustStop == true)

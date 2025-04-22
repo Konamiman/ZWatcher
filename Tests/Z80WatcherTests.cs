@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
+using Konamiman.Nestor80.Assembler;
 using Konamiman.Z80dotNet;
+using Konamiman.ZWatcher.Contexts;
 using NUnit.Framework;
 
 namespace Konamiman.ZWatcher.Tests
@@ -18,15 +18,16 @@ namespace Konamiman.ZWatcher.Tests
         [SetUp]
         public void Setup()
         {
-            Z80 = new Z80Processor();
-            Z80.AutoStopOnRetWithStackEmpty = true;
+            Z80 = new Z80Processor {
+                AutoStopOnRetWithStackEmpty = true
+            };
             Sut = new Z80Watcher(Z80);
         }
 
         [Test]
         public void Can_create_instances()
         {
-            Assert.IsNotNull(Sut);
+            Assert.That(Sut, Is.Not.Null);
         }
 
         private const int ProgramAddress = 0x100;
@@ -46,6 +47,11 @@ LOOP: ld a,(hl)
 
 DATA: db ""{helloWorld}"",0";
 
+        private bool IsDataByte(IContext context)
+        {
+            return context.Address >= context.Symbols["DATA"] && context.Address < (context.Symbols["DATA"] + helloWorld.Length);
+        }
+
         [Test]
         public void Can_stub_routines()
         {
@@ -55,10 +61,10 @@ DATA: db ""{helloWorld}"",0";
                 .BeforeFetchingInstructionAt("CHPUT")
                 .Do(context => printedChars.Add(context.Z80.Registers.A))
                 .ExecuteRet();
-            
+
             AssembleAndExecute(helloWorldProgram);
 
-            Assert.AreEqual(helloWorld, Encoding.ASCII.GetString(printedChars.ToArray()));
+            Assert.That(Encoding.ASCII.GetString(printedChars.ToArray()), Is.EqualTo(helloWorld));
         }
 
         [Test]
@@ -67,23 +73,23 @@ DATA: db ""{helloWorld}"",0";
             byte[] opcodeBytes = null;
 
             var program = @"
- ld a,34h
- ret";
+         ld a,34h
+         ret";
 
             Sut
                 .BeforeExecutingAt(ProgramAddress)
                 .Do(context => opcodeBytes = context.Opcode);
-            
+
             AssembleAndExecute(program);
 
-            Assert.AreEqual(new byte[] { 0x3E, 0x34 }, opcodeBytes);
+            Assert.That(opcodeBytes, Is.EqualTo(new byte[] { 0x3E, 0x34 }));
         }
 
         [Test]
         public void Can_stop_execution()
         {
             var printedChars = new List<byte>();
-            
+
             Sut
                 .BeforeExecutingAt("CHPUT")
                 .Do(context => printedChars.Add(context.Z80.Registers.A))
@@ -97,7 +103,7 @@ DATA: db ""{helloWorld}"",0";
 
             AssembleAndExecute(helloWorldProgram);
 
-            Assert.AreEqual("Hello,", Encoding.ASCII.GetString(printedChars.ToArray()));
+            Assert.That(Encoding.ASCII.GetString(printedChars.ToArray()), Is.EqualTo("Hello,"));
         }
         
         private byte Ascii(char theChar)
@@ -109,28 +115,26 @@ DATA: db ""{helloWorld}"",0";
         public void Can_replace_value_read_from_memory_before_read()
         {
             var printedChars = new List<byte>();
-            
+
             Sut
                 .BeforeFetchingInstructionAt("CHPUT")
                 .Do(context => printedChars.Add(context.Z80.Registers.A))
                 .ExecuteRet();
 
             Sut
-                .BeforeReadingMemory(context =>
-                    context.Address >= context.Symbols["DATA"] &&
-                    context.Address < context.Symbols["DATA"] + helloWorld.Length)
+                .BeforeReadingMemory(IsDataByte)
                 .SuppressMemoryAccessAndReturn(Ascii('A'));
 
             AssembleAndExecute(helloWorldProgram);
 
-            Assert.AreEqual(new string('A', helloWorld.Length), Encoding.ASCII.GetString(printedChars.ToArray()));
+            Assert.That(Encoding.ASCII.GetString(printedChars.ToArray()), Is.EqualTo(new string('A', helloWorld.Length)));
         }
 
         [Test]
         public void Can_replace_value_read_from_memory_after_read()
         {
             var printedChars = new List<byte>();
-            
+
             Sut
                 .BeforeFetchingInstructionAt("CHPUT")
                 .Do(context => printedChars.Add(context.Z80.Registers.A))
@@ -138,13 +142,13 @@ DATA: db ""{helloWorld}"",0";
 
             Sut
                 .AfterReadingMemory(context =>
-                    context.Address >= context.Symbols["DATA"] &&
+                    IsDataByte(context) &&
                     context.Value != 0)
                 .ReplaceObtainedValueWith(Ascii('A'));
 
             AssembleAndExecute(helloWorldProgram);
 
-            Assert.AreEqual(new string('A', helloWorld.Length), Encoding.ASCII.GetString(printedChars.ToArray()));
+            Assert.That(Encoding.ASCII.GetString(printedChars.ToArray()), Is.EqualTo(new string('A', helloWorld.Length)));
         }
 
         private string writeMemoryProgram =
@@ -162,26 +166,24 @@ DATA:   db 1,2,3,4
         public void Can_suppress_memory_write()
         {
             Sut
-                .BeforeWritingMemory(context =>
-                    context.Address >= context.Symbols["DATA"])
+                .BeforeWritingMemory(IsDataByte)
                 .SuppressWrite();
 
             AssembleAndExecute(writeMemoryProgram);
 
-            Assert.AreEqual(new byte[] { 1,2,3,4 }, Z80.Memory.GetContents(Sut.Symbols["DATA"], 4));
+            Assert.That(Z80.Memory.GetContents(Sut.Symbols["DATA"], 4), Is.EqualTo(new byte[] { 1, 2, 3, 4 }));
         }
 
         [Test]
         public void Can_replace_value_written_to_memory()
         {
             Sut
-                .BeforeWritingMemory(context =>
-                    context.Address >= context.Symbols["DATA"])
+                .BeforeWritingMemory(IsDataByte)
                 .ActuallyWrite(context => (byte)(context.Value + 1));
 
             AssembleAndExecute(writeMemoryProgram);
 
-            Assert.AreEqual(new byte[] { 11,21,31,41 }, Z80.Memory.GetContents(Sut.Symbols["DATA"], 4));
+            Assert.That(Z80.Memory.GetContents(Sut.Symbols["DATA"], 4), Is.EqualTo(new byte[] { 11, 21, 31, 41 }));
         }
 
         [Test]
@@ -190,13 +192,12 @@ DATA:   db 1,2,3,4
             var writenValues = new List<byte>();
 
             Sut
-                .AfterWritingMemory(context =>
-                    context.Address >= context.Symbols["DATA"])
+                .AfterWritingMemory(IsDataByte)
                 .Do(context => writenValues.Add((byte)context.Value));
 
             AssembleAndExecute(writeMemoryProgram);
 
-            Assert.AreEqual(new byte[] { 10,20,30,40 }, writenValues);
+            Assert.That(writenValues, Is.EqualTo(new byte[] { 10, 20, 30, 40 }));
         }
 
         private string readPortsProgram =
@@ -224,7 +225,7 @@ DATA: db 0,0,0,0
 
             AssembleAndExecute(readPortsProgram);
 
-            Assert.AreEqual(new byte[] { 1,2,3,4 }, Z80.Memory.GetContents(Sut.Symbols["DATA"], 4));
+            Assert.That(Z80.Memory.GetContents(Sut.Symbols["DATA"], 4), Is.EqualTo(new byte[] { 1, 2, 3, 4 }));
         }
 
         [Test]
@@ -236,7 +237,7 @@ DATA: db 0,0,0,0
 
             AssembleAndExecute(readPortsProgram);
 
-            Assert.AreEqual(new byte[] { 1,2,3,4 }, Z80.Memory.GetContents(Sut.Symbols["DATA"], 4));
+            Assert.That(Z80.Memory.GetContents(Sut.Symbols["DATA"], 4), Is.EqualTo(new byte[] { 1, 2, 3, 4 }));
         }
         
         private string writePortsProgram =
@@ -261,7 +262,7 @@ DATA: db 0,0,0,0
 
             AssembleAndExecute(writePortsProgram);
 
-            Assert.AreEqual(new byte[] { 1, 2, 0, 0 }, Z80.PortsSpace.GetContents(10, 4));
+            Assert.That(Z80.PortsSpace.GetContents(10, 4), Is.EqualTo(new byte[] { 1, 2, 0, 0 }));
         }
 
         [Test]
@@ -273,7 +274,7 @@ DATA: db 0,0,0,0
 
             AssembleAndExecute(writePortsProgram);
 
-            Assert.AreEqual(new byte[] { 11, 12, 13, 14 }, Z80.PortsSpace.GetContents(10, 4));
+            Assert.That(Z80.PortsSpace.GetContents(10, 4), Is.EqualTo(new byte[] { 11, 12, 13, 14 }));
         }
 
         [Test]
@@ -287,16 +288,16 @@ DATA: db 0,0,0,0
 
             AssembleAndExecute(writePortsProgram);
 
-            Assert.AreEqual(new byte[] { 1, 2, 3, 4 }, writtenValues);
+            Assert.That(writtenValues, Is.EqualTo(new byte[] { 1, 2, 3, 4 }));
         }
 
         [Test]
         public void Can_inspect_number_of_times_reached()
         {
             var printedChars = new List<byte>();
-
+            
             Sut
-                .AfterReadingMemory(context => context.Address >= context.Symbols["DATA"])
+                .AfterReadingMemory(IsDataByte)
                 .Do(context => {
                     if(context.TimesReached >= 8 && context.TimesReached <= 12)
                         context.Value = Ascii('*');
@@ -307,9 +308,12 @@ DATA: db 0,0,0,0
                 .Do(context => printedChars.Add(context.Z80.Registers.A))
                 .ExecuteRet();
 
+            //Sut.BeforeExecutingAt("CHPUT").ExecuteRet();
+
+            //Z80.Memory[0xA2] = 0xC9;
             AssembleAndExecute(helloWorldProgram);
 
-            Assert.AreEqual("Hello, *****!", Encoding.ASCII.GetString(printedChars.ToArray()));
+            Assert.That(Encoding.ASCII.GetString(printedChars.ToArray()), Is.EqualTo("Hello, *****!"));
         }
 
         [Test]
@@ -345,10 +349,10 @@ DATA: db 0,0,0,0
 
             var exception = Assert.Throws<ExpectationFailedException>(() => Sut.VerifyAllExpectations());
 
-            Assert.AreEqual(100, exception.MinReachesRequired);
-            Assert.AreEqual(200, exception.MaxReachesRequired);
-            Assert.AreEqual(helloWorld.Length, exception.ActualReaches);
-            Assert.AreEqual("BeforeInstructionFetch", exception.WatchName);
+            Assert.That(exception.MinReachesRequired, Is.EqualTo(100));
+            Assert.That(exception.MaxReachesRequired, Is.EqualTo(200));
+            Assert.That(exception.ActualReaches, Is.EqualTo(helloWorld.Length));
+            Assert.That(exception.WatchName, Is.EqualTo("BeforeInstructionFetch"));
         }
 
         [Test]
@@ -364,7 +368,7 @@ DATA: db 0,0,0,0
 
             var exception = Assert.Throws<ExpectationFailedException>(() => Sut.VerifyAllExpectations());
 
-            Assert.AreEqual("BeforeCHPUT", exception.WatchName);
+            Assert.That(exception.WatchName, Is.EqualTo("BeforeCHPUT"));
         }
 
         [Test]
@@ -379,8 +383,8 @@ DATA: db 0,0,0,0
 
             var exception = Assert.Throws<WatchExecutionException>(() => AssembleAndExecute(helloWorldProgram));
 
-            Assert.IsTrue(exception.WhenExecutingMatcher);
-            Assert.AreEqual(ProgramAddress, exception.Context.Address);
+            Assert.That(exception.WhenExecutingMatcher, Is.True);
+            Assert.That(exception.Context.Address, Is.EqualTo(ProgramAddress));
         }
 
         [Test]
@@ -392,8 +396,8 @@ DATA: db 0,0,0,0
 
             var exception = Assert.Throws<WatchExecutionException>(() => AssembleAndExecute(helloWorldProgram));
 
-            Assert.IsFalse(exception.WhenExecutingMatcher);
-            Assert.AreEqual(ProgramAddress, exception.Context.Address);
+            Assert.That(exception.WhenExecutingMatcher, Is.False);
+            Assert.That(exception.Context.Address, Is.EqualTo(ProgramAddress));
         }
 
         [Test]
@@ -420,47 +424,29 @@ DATA: db 0,0,0,0
         {
             program = $" org 0{address:X}h\r\n{program}";
 
-            File.WriteAllText("temp.asm", program);
-
-            var startInfo = new ProcessStartInfo("sjasm.exe", "-s temp.asm") {
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                UseShellExecute = false
+            var assemblyConfig = new AssemblyConfiguration() {
+                BuildType = BuildType.Absolute
             };
-            var proc = new Process();
-            proc.StartInfo = startInfo;
-            proc.Start();
-            proc.WaitForExit();
-            
-            if(proc.ExitCode != 0) {
-                var output = proc.StandardOutput.ReadToEnd();
-                output = RemoveFirstLine(output);
-                output = Regex.Replace(output, @"temp\.asm\(([0-9]+)\) :", "Line $1 :");
-                Assert.Fail($"Assembly process failed:\r\n\r\n{output}");
+            var assemblyResult = AssemblySourceProcessor.Assemble(program, assemblyConfig);
+            if(assemblyResult.HasErrors) {
+                Assert.Fail(
+                    "Assembly errrors!\r\n" +
+                    string.Join(
+                        "\r\n", 
+                        assemblyResult.Errors.Select(e => $"{e.LineNumber-1}: {e.Message}").ToArray()));
             }
 
-            var symbolLines = File.ReadAllLines("temp.sym");
-            foreach(var line in symbolLines) {
-                var parts = line.Split(':');
-                var symbol = parts[0];
-                var hexValue = 
-                    new string(parts[1].Replace("equ","").Where(c => char.IsDigit(c) || (c >= 'A' && c <= 'F')).ToArray());
-                var value = Convert.ToUInt16(hexValue.TrimStart('0'), 16);
-                Sut.Symbols[symbol] = value;
+            var outputStream = new MemoryStream();
+            OutputGenerator.GenerateAbsolute(assemblyResult, outputStream);
+
+            foreach(var symbol in assemblyResult.Symbols) {
+                Sut.Symbols[symbol.Name] = symbol.Value;
             }
 
-            var bytes = File.ReadAllBytes("temp.out");
-            Z80.Memory.SetContents(address, bytes);
+            Z80.Memory.SetContents(address, outputStream.ToArray());
             Z80.Reset();
             Z80.Registers.PC = address;
             Z80.Continue();
-        }
-
-        private static string RemoveFirstLine(string output)
-        {
-            return string.Join(
-                Environment.NewLine, 
-                output.Split(new[] { Environment.NewLine }, StringSplitOptions.None).Skip(1).ToArray());
         }
     }
 }

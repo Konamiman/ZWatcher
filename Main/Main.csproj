@@ -1,93 +1,35 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{40F0F95E-2F99-441A-86DD-F12923BFAB66}</ProjectGuid>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Konamiman.ZWatcher</RootNamespace>
     <AssemblyName>ZWatcher</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AssemblyTitle>ZWatcher</AssemblyTitle>
+    <Description>A toolbox to ease unit testing of Z80 code together with Z80.NET</Description>
+    <Company></Company>
+    <Product>ZWatcher</Product>
+    <Copyright>Copyright © Konamiman 2025</Copyright>
+    <AssemblyVersion>1.1.0</AssemblyVersion>
+    <FileVersion>1.1.0</FileVersion>
+    <PackageId>ZWatcher</PackageId>
+    <Title>ZWatcher</Title>
+    <Version>1.1.0</Version>
+    <Authors>Konamiman</Authors>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>Z80</PackageTags>
+    <RepositoryUrl>https://github.com/Konamiman/ZWatcher</RepositoryUrl>
+    <PackageReleaseNotes>- Retarget to .NET Standard 2.0
+- Use Nestor80 instead of sjasm for the unit tests</PackageReleaseNotes>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="Z80dotNet, Version=1.0.5.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Z80dotNet.1.0.5.0\lib\net40-Client\Z80dotNet.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
+    <None Include="..\NuGet\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Contexts\AfterCodeExecutionContext.cs" />
-    <Compile Include="Contexts\BeforeInstructionFetchContext.cs" />
-    <Compile Include="Contexts\BeforeCodeExecutionContext.cs" />
-    <Compile Include="Contexts\AfterMemoryReadContext.cs" />
-    <Compile Include="Contexts\AfterMemoryWriteContext.cs" />
-    <Compile Include="Contexts\BeforeMemoryWriteContext.cs" />
-    <Compile Include="Contexts\CodeExecutionContext.cs" />
-    <Compile Include="Contexts\BeforeMemoryReadContext.cs" />
-    <Compile Include="Contexts\Context.cs" />
-    <Compile Include="Watches\AfterCodeExecutionWatch.cs" />
-    <Compile Include="Watches\BeforeInstructionFetchWatch.cs" />
-    <Compile Include="Watches\BeforeCodeExecutionWatch.cs" />
-    <Compile Include="Watches\AfterMemoryReadWatch.cs" />
-    <Compile Include="Watches\AfterMemoryWriteWatch.cs" />
-    <Compile Include="Watches\BeforeMemoryWriteWatch.cs" />
-    <Compile Include="Watches\BeforeMemoryReadWatch.cs" />
-    <Compile Include="Watches\CodeExecutionWatch.cs" />
-    <Compile Include="Watches\ITimesreachedAware.cs" />
-    <Compile Include="Watches\IWatch.cs" />
-    <Compile Include="Watches\Watch.cs" />
-    <Compile Include="ExpectationFailedException.cs" />
-    <Compile Include="WatchExecutionException.cs" />
-    <Compile Include="WatchHandles\AfterCodeExecutionWatchHandle.cs" />
-    <Compile Include="WatchHandles\BeforeInstructionFetchWatchHandle.cs" />
-    <Compile Include="WatchHandles\BeforeMemoryWriteWatchHandle.cs" />
-    <Compile Include="WatchHandles\AfterMemoryWriteWatchHandle.cs" />
-    <Compile Include="WatchHandles\BeforeCodeExecutionWatchHandle.cs" />
-    <Compile Include="WatchHandles\AfterMemoryReadWatchHandle.cs" />
-    <Compile Include="WatchHandles\BeforeMemoryReadWatchHandle.cs" />
-    <Compile Include="WatchHandles\MemoryAccessWatchHandle.cs" />
-    <Compile Include="WatchHandles\CodeExecutionWatchHandle.cs" />
-    <Compile Include="Contexts\IContext.cs" />
-    <Compile Include="Contexts\MemoryAccessContext.cs" />
-    <Compile Include="Watches\MemoryAccessWatch.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="WatchHandles\IWatchHandle.cs" />
-    <Compile Include="WatchHandles\WatchHandle.cs" />
-    <Compile Include="Z80Watcher.cs" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="Z80dotNet" Version="1.1.0" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="Main.nuspec" />
-    <None Include="packages.config" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>

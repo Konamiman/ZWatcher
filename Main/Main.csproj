@@ -14,16 +14,21 @@
     <FileVersion>1.1.0</FileVersion>
     <PackageId>ZWatcher</PackageId>
     <Title>ZWatcher</Title>
-    <Version>1.1.0</Version>
+    <Version>1.1.0.1</Version>
     <Authors>Konamiman</Authors>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>Z80</PackageTags>
     <RepositoryUrl>https://github.com/Konamiman/ZWatcher</RepositoryUrl>
     <PackageReleaseNotes>- Retarget to .NET Standard 2.0
 - Use Nestor80 instead of sjasm for the unit tests</PackageReleaseNotes>
+    <PackageIcon>ZWatcher.jpg</PackageIcon>
   </PropertyGroup>
   <ItemGroup>
     <None Include="..\NuGet\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\NuGet\ZWatcher.jpg">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>

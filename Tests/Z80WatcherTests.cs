@@ -24,6 +24,12 @@ namespace Konamiman.ZWatcher.Tests
             Sut = new Z80Watcher(Z80);
         }
 
+        [TearDown]
+        public void TearDown()
+        {
+            Sut.Dispose();
+        }
+
         [Test]
         public void Can_create_instances()
         {
@@ -413,6 +419,68 @@ DATA: db 0,0,0,0
                 .PrintA();
 
             AssembleAndExecute(helloWorldProgram);
+        }
+        [Test]
+        public void RemoveAllWatches_removes_watches()
+        {
+            var printedChars = new List<byte>();
+            var memoryReads = 0;
+
+            Sut
+                .BeforeFetchingInstructionAt("CHPUT")
+                .Do(context => printedChars.Add(context.Z80.Registers.A))
+                .ExecuteRet();
+
+            Sut
+                .BeforeReadingMemory()
+                .Do(context => memoryReads++);
+
+            Sut.RemoveAllWatches();
+
+            AssembleAndExecute(helloWorldProgram);
+
+            Assert.That(printedChars, Is.Empty);
+            Assert.That(memoryReads, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void Dispose_removes_watches()
+        {
+            var printedChars = new List<byte>();
+            var memoryReads = 0;
+
+            Sut
+                .BeforeFetchingInstructionAt("CHPUT")
+                .Do(context => printedChars.Add(context.Z80.Registers.A))
+                .ExecuteRet();
+
+            Sut
+                .BeforeReadingMemory()
+                .Do(context => memoryReads++);
+
+            Sut.Dispose();
+
+            AssembleAndExecute(helloWorldProgram);
+
+            Assert.That(printedChars, Is.Empty);
+            Assert.That(memoryReads, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void After_Dispose_all_methods_throw()
+        {
+            Sut.Dispose();
+            Sut.Dispose(); //Dispose() can be executed multiple times
+            Assert.Throws<ObjectDisposedException>(() => Sut.BeforeFetchingInstruction());
+            Assert.Throws<ObjectDisposedException>(() => Sut.BeforeFetchingInstructionAt("CHPUT"));
+            Assert.Throws<ObjectDisposedException>(() => Sut.BeforeExecuting());
+            Assert.Throws<ObjectDisposedException>(() => Sut.BeforeExecutingAt(0xFFFF));
+            Assert.Throws<ObjectDisposedException>(() => Sut.BeforeReadingMemory());
+            Assert.Throws<ObjectDisposedException>(() => Sut.BeforeWritingMemory());
+            Assert.Throws<ObjectDisposedException>(() => Sut.BeforeReadingPort());
+            Assert.Throws<ObjectDisposedException>(() => Sut.BeforeWritingPort());
+            Assert.Throws<ObjectDisposedException>(() => Sut.VerifyAllExpectations());
+            Assert.Throws<ObjectDisposedException>(() => Sut.ResetAllReachCounts());
         }
 
         /// <summary>

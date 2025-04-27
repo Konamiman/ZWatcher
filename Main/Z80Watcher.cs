@@ -9,7 +9,7 @@ using Konamiman.ZWatcher.WatchHandles;
 
 namespace Konamiman.ZWatcher
 {
-    public class Z80Watcher
+    public class Z80Watcher : IDisposable
     {
         private List<BeforeMemoryReadWatch> BeforeMemoryReadWatches { get; } = new List<BeforeMemoryReadWatch>();
 
@@ -27,7 +27,7 @@ namespace Konamiman.ZWatcher
 
         private List<AfterMemoryWriteWatch> AfterPortWriteWatches { get; } = new List<AfterMemoryWriteWatch>();
 
-        private List<BeforeInstructionFetchWatch> BeforeInsructionFetchWatches { get; } = new List<BeforeInstructionFetchWatch>();
+        private List<BeforeInstructionFetchWatch> BeforeInstructionFetchWatches { get; } = new List<BeforeInstructionFetchWatch>();
 
         private List<BeforeCodeExecutionWatch> BeforeCodeExecutionWatches { get; } = new List<BeforeCodeExecutionWatch>();
 
@@ -52,6 +52,8 @@ namespace Konamiman.ZWatcher
         /// <exception cref="ExpectationFailedException">At least one watch was not reached the number of times expected.</exception>
         public void VerifyAllExpectations()
         {
+            CheckDisposed();
+
             var watches = GetAllRegisteredWatches();
             foreach(var watch in watches)
                 watch.VerifyRequiredReaches();
@@ -81,6 +83,8 @@ namespace Konamiman.ZWatcher
         /// </summary>
         public void ResetAllReachCounts()
         {
+            CheckDisposed();
+
             var watches = GetAllRegisteredWatches();
             foreach(var watch in watches)
                 watch.TimesReached = 0;
@@ -97,8 +101,10 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public BeforeInstructionFetchWatchHandle BeforeFetchingInstruction(Func<BeforeInstructionFetchContext, bool> isMatch)
         {
+            CheckDisposed();
+
             var handle = new BeforeInstructionFetchWatchHandle(isMatch);
-            BeforeInsructionFetchWatches.Add(handle.Watch);
+            BeforeInstructionFetchWatches.Add(handle.Watch);
             return handle;
         }
 
@@ -109,6 +115,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public BeforeInstructionFetchWatchHandle BeforeFetchingInstructionAt(ushort address)
         {
+            CheckDisposed();
+
             return BeforeFetchingInstruction(context => context.Address == address);
         }
 
@@ -119,6 +127,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public BeforeInstructionFetchWatchHandle BeforeFetchingInstructionAt(string address)
         {
+            CheckDisposed();
+
             return BeforeFetchingInstruction(context => context.Address == context.Symbols[address]);
         }
 
@@ -128,6 +138,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public BeforeInstructionFetchWatchHandle BeforeFetchingInstruction()
         {
+            CheckDisposed();
+
             return BeforeFetchingInstruction(context => true);
         }
 
@@ -138,6 +150,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public BeforeCodeExecutionWatchHandle BeforeExecuting(Func<CodeExecutionContext, bool> isMatch)
         {
+            CheckDisposed();
+
             var handle = new BeforeCodeExecutionWatchHandle(isMatch);
             BeforeCodeExecutionWatches.Add(handle.Watch);
             return handle;
@@ -150,6 +164,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public BeforeCodeExecutionWatchHandle BeforeExecutingAt(ushort address)
         {
+            CheckDisposed();
+
             return BeforeExecuting(context => context.Address == address);
         }
 
@@ -160,6 +176,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public BeforeCodeExecutionWatchHandle BeforeExecutingAt(string address)
         {
+            CheckDisposed();
+
             return BeforeExecuting(context => context.Address == context.Symbols[address]);
         }
 
@@ -169,6 +187,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public BeforeCodeExecutionWatchHandle BeforeExecuting()
         {
+            CheckDisposed();
+
             return BeforeExecuting(context => true);
         }
 
@@ -179,6 +199,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public AfterCodeExecutionWatchHandle AfterExecuting(Func<CodeExecutionContext, bool> isMatch)
         {
+            CheckDisposed();
+
             var handle = new AfterCodeExecutionWatchHandle(isMatch);
             AfterCodeExecutionWatches.Add(handle.Watch);
             return handle;
@@ -191,6 +213,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public AfterCodeExecutionWatchHandle AfterExecutingAt(string address)
         {
+            CheckDisposed();
+
             return AfterExecuting(context => context.Address == context.Symbols[address]);
         }
 
@@ -201,6 +225,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public AfterCodeExecutionWatchHandle AfterExecutingAt(ushort address)
         {
+            CheckDisposed();
+
             return AfterExecuting(context => context.Address == address);
         }
 
@@ -210,6 +236,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public AfterCodeExecutionWatchHandle AfterExecuting()
         {
+            CheckDisposed();
+
             return AfterExecuting(context => true);
         }
 
@@ -224,6 +252,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public BeforeMemoryReadWatchHandle BeforeReadingMemory(Func<BeforeMemoryReadContext, bool> isMatch)
         {
+            CheckDisposed();
+
             var handle = new BeforeMemoryReadWatchHandle(isMatch);
             BeforeMemoryReadWatches.Add(handle.Watch);
             return handle;
@@ -236,6 +266,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public BeforeMemoryReadWatchHandle BeforeReadingMemory(ushort address)
         {
+            CheckDisposed();
+
             return BeforeReadingMemory(context => context.Address == address);
         }
 
@@ -245,6 +277,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public BeforeMemoryReadWatchHandle BeforeReadingMemory()
         {
+            CheckDisposed();
+
             return BeforeReadingMemory(context => true);
         }
 
@@ -255,6 +289,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public AfterMemoryReadWatchHandle AfterReadingMemory(Func<AfterMemoryReadContext, bool> isMatch)
         {
+            CheckDisposed();
+
             var handle = new AfterMemoryReadWatchHandle(isMatch);
             AfterMemoryReadWatches.Add(handle.Watch);
             return handle;
@@ -267,6 +303,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public AfterMemoryReadWatchHandle AfterReadingMemory(ushort address)
         {
+            CheckDisposed();
+
             return AfterReadingMemory(context => context.Address == address);
         }
 
@@ -276,6 +314,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public AfterMemoryReadWatchHandle AfterReadingMemory()
         {
+            CheckDisposed();
+
             return AfterReadingMemory(context => true);
         }
 
@@ -286,6 +326,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public BeforeMemoryWriteWatchHandle BeforeWritingMemory(Func<BeforeMemoryWriteContext, bool> isMatch)
         {
+            CheckDisposed();
+
             var handle = new BeforeMemoryWriteWatchHandle(isMatch);
             BeforeMemoryWriteWatches.Add(handle.Watch);
             return handle;
@@ -298,6 +340,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public BeforeMemoryWriteWatchHandle BeforeWritingMemory(ushort address)
         {
+            CheckDisposed();
+
             return BeforeWritingMemory(context => context.Address == address);
         }
 
@@ -307,6 +351,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public BeforeMemoryWriteWatchHandle BeforeWritingMemory()
         {
+            CheckDisposed();
+
             return BeforeWritingMemory(context => true);
         }
 
@@ -317,6 +363,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public AfterMemoryWriteWatchHandle AfterWritingMemory(Func<AfterMemoryWriteContext, bool> isMatch)
         {
+            CheckDisposed();
+
             var handle = new AfterMemoryWriteWatchHandle(isMatch);
             AfterMemoryWriteWatches.Add(handle.Watch);
             return handle;
@@ -329,6 +377,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public AfterMemoryWriteWatchHandle AfterWritingMemory(ushort address)
         {
+            CheckDisposed();
+
             return AfterWritingMemory(context => context.Address == address);
         }
 
@@ -338,6 +388,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public AfterMemoryWriteWatchHandle AfterWritingMemory()
         {
+            CheckDisposed();
+
             return AfterWritingMemory(context => true);
         }
 
@@ -352,6 +404,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public BeforeMemoryReadWatchHandle BeforeReadingPort(Func<BeforeMemoryReadContext, bool> isMatch)
         {
+            CheckDisposed();
+
             var handle = new BeforeMemoryReadWatchHandle(isMatch);
             BeforePortReadWatches.Add(handle.Watch);
             return handle;
@@ -364,6 +418,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public BeforeMemoryReadWatchHandle BeforeReadingPort(ushort address)
         {
+            CheckDisposed();
+
             return BeforeReadingPort(context => context.Address == address);
         }
 
@@ -373,6 +429,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public BeforeMemoryReadWatchHandle BeforeReadingPort()
         {
+            CheckDisposed();
+
             return BeforeReadingPort(context => true);
         }
 
@@ -383,6 +441,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public AfterMemoryReadWatchHandle AfterReadingPort(Func<AfterMemoryReadContext, bool> isMatch)
         {
+            CheckDisposed();
+
             var handle = new AfterMemoryReadWatchHandle(isMatch);
             AfterPortReadWatches.Add(handle.Watch);
             return handle;
@@ -395,6 +455,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public AfterMemoryReadWatchHandle AfterReadingPort(ushort address)
         {
+            CheckDisposed();
+
             return AfterReadingPort(context => context.Address == address);
         }
 
@@ -404,6 +466,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public AfterMemoryReadWatchHandle AfterReadingPort()
         {
+            CheckDisposed();
+
             return AfterReadingPort(context => true);
         }
 
@@ -414,6 +478,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public BeforeMemoryWriteWatchHandle BeforeWritingPort(Func<BeforeMemoryWriteContext, bool> isMatch)
         {
+            CheckDisposed();
+
             var handle = new BeforeMemoryWriteWatchHandle(isMatch);
             BeforePortWriteWatches.Add(handle.Watch);
             return handle;
@@ -426,6 +492,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public BeforeMemoryWriteWatchHandle BeforeWritingPort(byte address)
         {
+            CheckDisposed();
+
             return BeforeWritingPort(context => context.Address == address);
         }
 
@@ -435,6 +503,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public BeforeMemoryWriteWatchHandle BeforeWritingPort()
         {
+            CheckDisposed();
+
             return BeforeWritingPort(context => true);
         }
 
@@ -445,6 +515,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public AfterMemoryWriteWatchHandle AfterWritingPort(Func<AfterMemoryWriteContext, bool> isMatch)
         {
+            CheckDisposed();
+
             var handle = new AfterMemoryWriteWatchHandle(isMatch);
             AfterPortWriteWatches.Add(handle.Watch);
             return handle;
@@ -457,6 +529,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public AfterMemoryWriteWatchHandle AfterWritingPort(byte address)
         {
+            CheckDisposed();
+
             return AfterWritingPort(context => context.Address == address);
         }
 
@@ -466,6 +540,8 @@ namespace Konamiman.ZWatcher
         /// <returns></returns>
         public AfterMemoryWriteWatchHandle AfterWritingPort()
         {
+            CheckDisposed();
+
             return AfterWritingPort(context => true);
         }
 
@@ -477,7 +553,7 @@ namespace Konamiman.ZWatcher
         {
             var z80 = (IZ80Processor)sender;
             var context = new BeforeInstructionFetchContext(z80, z80.Registers.PC, Symbols);
-            InvokeAllCallbacksOnMatchingWatches(BeforeInsructionFetchWatches, context);
+            InvokeAllCallbacksOnMatchingWatches(BeforeInstructionFetchWatches, context);
         }
 
         private static void InvokeAllCallbacksOnMatchingWatches<T>(IEnumerable<IWatch<T>> watches, T context)
@@ -594,6 +670,50 @@ namespace Konamiman.ZWatcher
                 else 
                     e.Value = (byte)context.Value;
             }
+        }
+
+        #endregion
+
+        #region Cleanup
+
+        /// <summary>
+        /// Remove all the existing watches, basically resetting the watcher to its initial state.
+        /// </summary>
+        public void RemoveAllWatches()
+        {
+            BeforeMemoryReadWatches.Clear();
+            AfterMemoryReadWatches.Clear();
+            BeforeMemoryWriteWatches.Clear();
+            AfterMemoryWriteWatches.Clear();
+            BeforePortReadWatches.Clear();
+            AfterPortReadWatches.Clear();
+            BeforePortWriteWatches.Clear();
+            AfterPortWriteWatches.Clear();
+            BeforeInstructionFetchWatches.Clear();
+            BeforeCodeExecutionWatches.Clear();
+            AfterCodeExecutionWatches.Clear();
+        }
+
+        private bool disposed = false;
+
+        private void CheckDisposed()
+        {
+            if(disposed) {
+                throw new ObjectDisposedException("This object has been disposed. No further operations are allowed.");
+            }
+        }
+
+        /// <summary>
+        /// Disposes the watcher. Any further operations on it will throw an exception.
+        /// </summary>
+        public void Dispose()
+        {
+            if(disposed) {
+                return;
+            }
+            disposed = true;
+
+            RemoveAllWatches();
         }
 
         #endregion

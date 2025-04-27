@@ -135,6 +135,13 @@ ZWatcher will throw an exception when an expectation fails (`ExpectationFailedEx
 By default, the name of a watch reflects its type, such as `AfterCodeExecution` or `BeforeReadingMemory`, but you can set a more readable name by using the `Named` method exposed by the watch handle. This is a good idea especially if you define more than one handle of the same type.
 
 
+## Cleanup ##
+
+There's no way to remove individual watches after they have been added, but the `RemoveAllWatches` method will do what its name says, reverting the instance to its initial state. When using ZWatcher to run a suite of unit tests it's recommended to run this after each test, otherwise the watch callbacks from the previous tests will unintendedly fire and disrupt the tests that follow (this is true even when creating a new instance of ZWatcher instance if the same instance of `Z80Processor` is reused).
+
+`ZWatcher` also implements the standard .NET interface `IDisposable`. Running `Dispose` will be equivalent to running `RemoveAllWatches`, execpt that the instance will no longer be usable.
+
+
 ## Learning more ##
 
 From here the best way to continue learning about the power of ZWatcher is to take a look at [the unit tests in the source code repository](Tests/Z80WatcherTests.cs). There you will also see a nice example of how to combine [Nestor80](https://github.com/Konamiman/Nestor80), Z80.NET and ZWatcher to test Z80 source code.

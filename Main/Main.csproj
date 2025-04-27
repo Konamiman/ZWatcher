@@ -10,17 +10,19 @@
     <Company></Company>
     <Product>ZWatcher</Product>
     <Copyright>Copyright © Konamiman 2025</Copyright>
-    <AssemblyVersion>1.1.0</AssemblyVersion>
-    <FileVersion>1.1.0</FileVersion>
+    <AssemblyVersion>1.1.1</AssemblyVersion>
+    <FileVersion>1.1.1</FileVersion>
     <PackageId>ZWatcher</PackageId>
     <Title>ZWatcher</Title>
-    <Version>1.1.0.1</Version>
+    <Version>1.1.1</Version>
     <Authors>Konamiman</Authors>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>Z80</PackageTags>
     <RepositoryUrl>https://github.com/Konamiman/ZWatcher</RepositoryUrl>
-    <PackageReleaseNotes>- Retarget to .NET Standard 2.0
-- Use Nestor80 instead of sjasm for the unit tests</PackageReleaseNotes>
+    <PackageReleaseNotes>- Add a RemoveAllWatches method and implement IDisposable
+- Performance improvements
+
+https://github.com/Konamiman/ZWatcher/issues?q=milestone%3Av1.1.1</PackageReleaseNotes>
     <PackageIcon>ZWatcher.jpg</PackageIcon>
   </PropertyGroup>
   <ItemGroup>

@@ -35,12 +35,25 @@ namespace Konamiman.ZWatcher
 
         public IDictionary<string, ushort> Symbols { get; } = new Dictionary<string, ushort>();
 
+        private readonly IZ80Processor z80;
+
+        private bool hasMemoryAccessWatches = false;
+        private bool hasBeforeInstructionFetchWatches = false;
+        private bool hasBeforeInstructionExecutionWatches = false;
+        private bool hasAfterInstructionExecutionWatches = false;
+
+        BeforeInstructionFetchContext beforeInstructionFetchContext = null;
+        BeforeCodeExecutionContext beforeCodeExecutionContext = null;
+        AfterCodeExecutionContext afterCodeExecutionContext = null;
+
+        BeforeMemoryReadContext beforeMemoryReadContext = null;
+        AfterMemoryReadContext afterMemoryReadContext = null;
+        BeforeMemoryWriteContext beforeMemoryWriteContext = null;
+        AfterMemoryWriteContext afterMemoryWriteContext = null;
+
         public Z80Watcher(IZ80Processor z80)
         {
-            z80.BeforeInstructionFetch += Z80OnBeforeInstructionFetch;
-            z80.BeforeInstructionExecution += Z80OnBeforeInstructionExecution;
-            z80.AfterInstructionExecution += Z80OnAfterInstructionExecution;
-            z80.MemoryAccess += Z80OnMemoryAccess;
+            this.z80 = z80;
         }
 
         #region Verifying expectations
@@ -105,6 +118,12 @@ namespace Konamiman.ZWatcher
 
             var handle = new BeforeInstructionFetchWatchHandle(isMatch);
             BeforeInstructionFetchWatches.Add(handle.Watch);
+            if(!hasBeforeInstructionFetchWatches) {
+                beforeInstructionFetchContext = new BeforeInstructionFetchContext(z80, 0, Symbols);
+                z80.BeforeInstructionFetch += Z80OnBeforeInstructionFetch;
+                hasBeforeInstructionFetchWatches = true;
+            }
+
             return handle;
         }
 
@@ -154,6 +173,13 @@ namespace Konamiman.ZWatcher
 
             var handle = new BeforeCodeExecutionWatchHandle(isMatch);
             BeforeCodeExecutionWatches.Add(handle.Watch);
+
+            if(!hasBeforeInstructionExecutionWatches) {
+                beforeCodeExecutionContext = new BeforeCodeExecutionContext(z80, 0, null, Symbols);
+                z80.BeforeInstructionExecution += Z80OnBeforeInstructionExecution;
+                hasBeforeInstructionExecutionWatches = true;
+            }
+
             return handle;
         }
 
@@ -203,6 +229,13 @@ namespace Konamiman.ZWatcher
 
             var handle = new AfterCodeExecutionWatchHandle(isMatch);
             AfterCodeExecutionWatches.Add(handle.Watch);
+
+            if(!hasAfterInstructionExecutionWatches) {
+                afterCodeExecutionContext = new AfterCodeExecutionContext(z80, 0, null, Symbols);
+                z80.AfterInstructionExecution += Z80OnAfterInstructionExecution;
+                hasAfterInstructionExecutionWatches = true;
+            }
+
             return handle;
         }
 
@@ -254,9 +287,23 @@ namespace Konamiman.ZWatcher
         {
             CheckDisposed();
 
+            MaybeAttachMemoryAccessEvent();
             var handle = new BeforeMemoryReadWatchHandle(isMatch);
             BeforeMemoryReadWatches.Add(handle.Watch);
             return handle;
+        }
+
+        private void MaybeAttachMemoryAccessEvent()
+        {
+            if(!hasMemoryAccessWatches) {
+                beforeMemoryReadContext = new BeforeMemoryReadContext(z80, 0, Symbols);
+                afterMemoryReadContext = new AfterMemoryReadContext(z80, 0, 0, Symbols);
+                beforeMemoryWriteContext = new BeforeMemoryWriteContext(z80, 0, 0, Symbols);
+                afterMemoryWriteContext = new AfterMemoryWriteContext(z80, 0, 0, Symbols);
+
+                z80.MemoryAccess += Z80OnMemoryAccess;
+                hasMemoryAccessWatches = true;
+            }
         }
 
         /// <summary>
@@ -291,6 +338,7 @@ namespace Konamiman.ZWatcher
         {
             CheckDisposed();
 
+            MaybeAttachMemoryAccessEvent();
             var handle = new AfterMemoryReadWatchHandle(isMatch);
             AfterMemoryReadWatches.Add(handle.Watch);
             return handle;
@@ -328,6 +376,7 @@ namespace Konamiman.ZWatcher
         {
             CheckDisposed();
 
+            MaybeAttachMemoryAccessEvent();
             var handle = new BeforeMemoryWriteWatchHandle(isMatch);
             BeforeMemoryWriteWatches.Add(handle.Watch);
             return handle;
@@ -365,6 +414,7 @@ namespace Konamiman.ZWatcher
         {
             CheckDisposed();
 
+            MaybeAttachMemoryAccessEvent();
             var handle = new AfterMemoryWriteWatchHandle(isMatch);
             AfterMemoryWriteWatches.Add(handle.Watch);
             return handle;
@@ -406,6 +456,7 @@ namespace Konamiman.ZWatcher
         {
             CheckDisposed();
 
+            MaybeAttachMemoryAccessEvent();
             var handle = new BeforeMemoryReadWatchHandle(isMatch);
             BeforePortReadWatches.Add(handle.Watch);
             return handle;
@@ -443,6 +494,7 @@ namespace Konamiman.ZWatcher
         {
             CheckDisposed();
 
+            MaybeAttachMemoryAccessEvent();
             var handle = new AfterMemoryReadWatchHandle(isMatch);
             AfterPortReadWatches.Add(handle.Watch);
             return handle;
@@ -480,6 +532,7 @@ namespace Konamiman.ZWatcher
         {
             CheckDisposed();
 
+            MaybeAttachMemoryAccessEvent();
             var handle = new BeforeMemoryWriteWatchHandle(isMatch);
             BeforePortWriteWatches.Add(handle.Watch);
             return handle;
@@ -517,6 +570,7 @@ namespace Konamiman.ZWatcher
         {
             CheckDisposed();
 
+            MaybeAttachMemoryAccessEvent();
             var handle = new AfterMemoryWriteWatchHandle(isMatch);
             AfterPortWriteWatches.Add(handle.Watch);
             return handle;
@@ -551,9 +605,9 @@ namespace Konamiman.ZWatcher
         
         private void Z80OnBeforeInstructionFetch(object sender, BeforeInstructionFetchEventArgs e)
         {
-            var z80 = (IZ80Processor)sender;
-            var context = new BeforeInstructionFetchContext(z80, z80.Registers.PC, Symbols);
-            InvokeAllCallbacksOnMatchingWatches(BeforeInstructionFetchWatches, context);
+            beforeInstructionFetchContext.Address = ((IZ80Processor)sender).Registers.PC;
+            beforeInstructionFetchContext.TimesReached = 0;
+            InvokeAllCallbacksOnMatchingWatches(BeforeInstructionFetchWatches, beforeInstructionFetchContext);
         }
 
         private static void InvokeAllCallbacksOnMatchingWatches<T>(IEnumerable<IWatch<T>> watches, T context)
@@ -590,11 +644,18 @@ namespace Konamiman.ZWatcher
 
         private void Z80OnAfterInstructionExecution(object sender, AfterInstructionExecutionEventArgs e)
         {
+            if(e.LocalUserState is null) {
+                throw new InvalidOperationException($"After instruction executuon handles must be paired with at least one before instruction execution handle. Invoking {nameof(BeforeExecuting)}() in the watcher instance is enough. ");
+            }
+
             var z80 = (IZ80Processor)sender;
             var address = (ushort)e.LocalUserState;
-            var context = new AfterCodeExecutionContext(z80, address, e.Opcode, Symbols);
-            InvokeAllCallbacksOnMatchingWatches(AfterCodeExecutionWatches, context);
-            if(context.MustStop)
+            afterCodeExecutionContext.Address = address;
+            afterCodeExecutionContext.Opcode = e.Opcode;
+            afterCodeExecutionContext.TimesReached = 0;
+            afterCodeExecutionContext.MustStop = false;
+            InvokeAllCallbacksOnMatchingWatches(AfterCodeExecutionWatches, afterCodeExecutionContext);
+            if(afterCodeExecutionContext.MustStop)
                 e.ExecutionStopper.Stop(false);
         }
 
@@ -603,9 +664,11 @@ namespace Konamiman.ZWatcher
             var z80 = (IZ80Processor)sender;
             var address = (ushort)(z80.Registers.PC - e.Opcode.Length);
             e.LocalUserState = address;
-            var context = new BeforeCodeExecutionContext(z80, address, e.Opcode, Symbols);
-            
-            InvokeAllCallbacksOnMatchingWatches(BeforeCodeExecutionWatches, context);
+            beforeCodeExecutionContext.Address = address;
+            beforeCodeExecutionContext.Opcode = e.Opcode;
+            beforeCodeExecutionContext.TimesReached = 0;
+
+            InvokeAllCallbacksOnMatchingWatches(BeforeCodeExecutionWatches, beforeCodeExecutionContext);
         }
 
         #endregion
@@ -617,58 +680,73 @@ namespace Konamiman.ZWatcher
             var z80 = (IZ80Processor)sender;
 
             if(e.EventType == MemoryAccessEventType.AfterMemoryRead) {
-                var context = new AfterMemoryReadContext(z80, e.Address, e.Value, Symbols);
-                InvokeAllCallbacksOnMatchingWatches(AfterMemoryReadWatches, context);
-                e.Value = context.Value;
+                afterMemoryReadContext.Address = e.Address;
+                afterMemoryReadContext.Value = e.Value;
+                afterMemoryReadContext.TimesReached = 0;
+                InvokeAllCallbacksOnMatchingWatches(AfterMemoryReadWatches, afterMemoryReadContext);
+                e.Value = afterMemoryReadContext.Value;
             }
             else if(e.EventType == MemoryAccessEventType.BeforeMemoryRead) {
-                var context = new BeforeMemoryReadContext(z80, e.Address, Symbols);
-                InvokeAllCallbacksOnMatchingWatches(BeforeMemoryReadWatches, context);
-                if(context.Value != null) {
-                    e.Value = (byte)context.Value;
+                beforeMemoryReadContext.Address = e.Address;
+                beforeMemoryReadContext.Value = null;
+                beforeMemoryReadContext.TimesReached = 0;
+                InvokeAllCallbacksOnMatchingWatches(BeforeMemoryReadWatches, beforeMemoryReadContext);
+                if(beforeMemoryReadContext.Value != null) {
+                    e.Value = (byte)beforeMemoryReadContext.Value;
                     e.CancelMemoryAccess = true;
                 }
             }
-            else if(e.EventType == MemoryAccessEventType.AfterMemoryWrite)
-            {
+            else if(e.EventType == MemoryAccessEventType.AfterMemoryWrite) {
                 var value = e.CancelMemoryAccess ? (byte?)null : e.Value;
-                var context = new AfterMemoryWriteContext(z80, e.Address, value, Symbols);
-                InvokeAllCallbacksOnMatchingWatches(AfterMemoryWriteWatches, context);
+                afterMemoryWriteContext.Address = e.Address;
+                afterMemoryWriteContext.Value = value;
+                afterMemoryWriteContext.TimesReached = 0;
+                InvokeAllCallbacksOnMatchingWatches(AfterMemoryWriteWatches, afterMemoryWriteContext);
             }
             else if(e.EventType == MemoryAccessEventType.BeforeMemoryWrite) {
-                var context = new BeforeMemoryWriteContext(z80, e.Address, e.Value, Symbols);
-                InvokeAllCallbacksOnMatchingWatches(BeforeMemoryWriteWatches, context);
-                if(context.Value == null)
+                beforeMemoryWriteContext.Address = e.Address;
+                beforeMemoryWriteContext.Value = e.Value;
+                beforeMemoryWriteContext.TimesReached = 0;
+                InvokeAllCallbacksOnMatchingWatches(BeforeMemoryWriteWatches, beforeMemoryWriteContext);
+                if(beforeMemoryWriteContext.Value == null)
                     e.CancelMemoryAccess = true;
-                else 
-                    e.Value = (byte)context.Value;
+                else
+                    e.Value = (byte)beforeMemoryWriteContext.Value;
             }
 
             else if(e.EventType == MemoryAccessEventType.AfterPortRead) {
-                var context = new AfterMemoryReadContext(z80, e.Address, e.Value, Symbols);
-                InvokeAllCallbacksOnMatchingWatches(AfterPortReadWatches, context);
-                e.Value = context.Value;
+                afterMemoryReadContext.Address = e.Address;
+                afterMemoryReadContext.Value = e.Value;
+                afterMemoryReadContext.TimesReached = 0;
+                InvokeAllCallbacksOnMatchingWatches(AfterPortReadWatches, afterMemoryReadContext);
+                e.Value = afterMemoryReadContext.Value;
             }
             else if(e.EventType == MemoryAccessEventType.BeforePortRead) {
-                var context = new BeforeMemoryReadContext(z80, e.Address, Symbols);
-                InvokeAllCallbacksOnMatchingWatches(BeforePortReadWatches, context);
-                if(context.Value != null) {
-                    e.Value = (byte)context.Value;
+                beforeMemoryReadContext.Address = e.Address;
+                beforeMemoryReadContext.Value = null;
+                beforeMemoryReadContext.TimesReached = 0;
+                InvokeAllCallbacksOnMatchingWatches(BeforePortReadWatches, beforeMemoryReadContext);
+                if(beforeMemoryReadContext.Value != null) {
+                    e.Value = (byte)beforeMemoryReadContext.Value;
                     e.CancelMemoryAccess = true;
                 }
             }
             else if(e.EventType == MemoryAccessEventType.AfterPortWrite) {
                 var value = e.CancelMemoryAccess ? (byte?)null : e.Value;
-                var context = new AfterMemoryWriteContext(z80, e.Address, value, Symbols);
-                InvokeAllCallbacksOnMatchingWatches(AfterPortWriteWatches, context);
+                afterMemoryWriteContext.Address = e.Address;
+                afterMemoryWriteContext.Value = value;
+                afterMemoryWriteContext.TimesReached = 0;
+                InvokeAllCallbacksOnMatchingWatches(AfterPortWriteWatches, afterMemoryWriteContext);
             }
             else if(e.EventType == MemoryAccessEventType.BeforePortWrite) {
-                var context = new BeforeMemoryWriteContext(z80, e.Address, e.Value, Symbols);
-                InvokeAllCallbacksOnMatchingWatches(BeforePortWriteWatches, context);
-                if(context.Value == null)
+                beforeMemoryWriteContext.Address = e.Address;
+                beforeMemoryWriteContext.Value = e.Value;
+                beforeMemoryWriteContext.TimesReached = 0;
+                InvokeAllCallbacksOnMatchingWatches(BeforePortWriteWatches, beforeMemoryWriteContext);
+                if(beforeMemoryWriteContext.Value == null)
                     e.CancelMemoryAccess = true;
-                else 
-                    e.Value = (byte)context.Value;
+                else
+                    e.Value = (byte)beforeMemoryWriteContext.Value;
             }
         }
 
@@ -681,17 +759,44 @@ namespace Konamiman.ZWatcher
         /// </summary>
         public void RemoveAllWatches()
         {
-            BeforeMemoryReadWatches.Clear();
-            AfterMemoryReadWatches.Clear();
-            BeforeMemoryWriteWatches.Clear();
-            AfterMemoryWriteWatches.Clear();
-            BeforePortReadWatches.Clear();
-            AfterPortReadWatches.Clear();
-            BeforePortWriteWatches.Clear();
-            AfterPortWriteWatches.Clear();
-            BeforeInstructionFetchWatches.Clear();
-            BeforeCodeExecutionWatches.Clear();
-            AfterCodeExecutionWatches.Clear();
+            if(hasMemoryAccessWatches) {
+                z80.MemoryAccess -= Z80OnMemoryAccess;
+                hasMemoryAccessWatches = false;
+                BeforeMemoryReadWatches.Clear();
+                AfterMemoryReadWatches.Clear();
+                BeforeMemoryWriteWatches.Clear();
+                AfterMemoryWriteWatches.Clear();
+                BeforePortReadWatches.Clear();
+                AfterPortReadWatches.Clear();
+                BeforePortWriteWatches.Clear();
+                AfterPortWriteWatches.Clear();
+            }
+
+            if(hasBeforeInstructionFetchWatches) {
+                z80.BeforeInstructionFetch -= Z80OnBeforeInstructionFetch;
+                hasBeforeInstructionFetchWatches = false;
+                BeforeInstructionFetchWatches.Clear();
+            }
+
+            if(hasBeforeInstructionExecutionWatches) {
+                z80.BeforeInstructionExecution -= Z80OnBeforeInstructionExecution;
+                hasBeforeInstructionExecutionWatches = false;
+                BeforeCodeExecutionWatches.Clear();
+            }
+
+            if(hasAfterInstructionExecutionWatches) {
+                z80.AfterInstructionExecution -= Z80OnAfterInstructionExecution;
+                hasAfterInstructionExecutionWatches = false;
+                AfterCodeExecutionWatches.Clear();
+            }
+
+            beforeInstructionFetchContext = null;
+            beforeCodeExecutionContext = null;
+            afterCodeExecutionContext = null;
+            beforeMemoryReadContext = null;
+            afterMemoryReadContext = null;
+            beforeMemoryWriteContext = null;
+            afterMemoryWriteContext = null;
         }
 
         private bool disposed = false;

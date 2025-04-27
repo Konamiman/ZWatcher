@@ -110,6 +110,8 @@ foreach(var watch in matchingWatches)
 
 As you can see, all the watches and its callbacks share a common context object. It is also worth noting that watches are evaluated in the order in which they are declared, and the same applies for the callbacks for each watch.
 
+**Note:** The `AfterExecuting` watch requires to be paired with a `BeforeExecuting` watch (an empty one, like `watcher.BEforeExecuting();`, is enough), otherwise an `InvalidOperationException` will be throw when the execution of the Z80 code starts.
+
 
 ## Defining and verifying expectations ##
 

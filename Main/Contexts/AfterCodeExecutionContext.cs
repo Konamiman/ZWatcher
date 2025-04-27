@@ -11,7 +11,7 @@ namespace Konamiman.ZWatcher.Contexts
         /// <summary>
         /// Bytes that form the opcode that has been executed.
         /// </summary>
-        public byte[] Opcode { get; }
+        public byte[] Opcode { get; internal set; }
 
         /// <summary>
         /// If set to true, code execution will stop after the current instruction

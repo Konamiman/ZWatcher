@@ -16,6 +16,5 @@ namespace Konamiman.ZWatcher.Watches
         long MinimumReachesRequired { get; set; }
 
         long MaximumReachesAllowed { get; set; }
-
     }
 }

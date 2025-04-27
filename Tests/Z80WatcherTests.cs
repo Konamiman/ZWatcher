@@ -96,10 +96,13 @@ DATA: db ""{helloWorld}"",0";
         {
             var printedChars = new List<byte>();
 
+            Sut.BeforeExecuting();
+
             Sut
-                .BeforeExecutingAt("CHPUT")
-                .Do(context => printedChars.Add(context.Z80.Registers.A))
-                .ExecuteRet();
+                .BeforeFetchingInstructionAt("CHPUT")
+                .Do(context =>
+                    printedChars.Add(context.Z80.Registers.A)
+                 );
 
             Sut
                 .AfterExecuting(context =>
@@ -483,6 +486,14 @@ DATA: db 0,0,0,0
             Assert.Throws<ObjectDisposedException>(() => Sut.ResetAllReachCounts());
         }
 
+        [Test]
+        public void AfterExecution_handle_not_paired_with_BeforeExecution_handle_throws_exception()
+        {
+            Sut.AfterExecuting();
+
+            Assert.Throws<InvalidOperationException>(() => AssembleAndExecute(helloWorldProgram));
+        }
+
         /// <summary>
         /// Assembles the specified Z80 source, loads it at the specified address, and executes it.
         /// </summary>
@@ -509,6 +520,10 @@ DATA: db 0,0,0,0
 
             foreach(var symbol in assemblyResult.Symbols) {
                 Sut.Symbols[symbol.Name] = symbol.Value;
+            }
+
+            if(Sut.Symbols.ContainsKey("CHPUT")) {
+                Z80.Memory[Sut.Symbols["CHPUT"]] = 0xC9; // RET
             }
 
             Z80.Memory.SetContents(address, outputStream.ToArray());

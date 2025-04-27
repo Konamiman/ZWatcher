@@ -11,7 +11,7 @@ namespace Konamiman.ZWatcher.Contexts
         /// <summary>
         /// Bytes that form the opcode that will be executed.
         /// </summary>
-        public byte[] Opcode { get; }
+        public byte[] Opcode { get; internal set; }
 
         internal BeforeCodeExecutionContext(IZ80Processor z80, ushort address, byte[] opcode, IDictionary<string, ushort> symbols)
             : base(z80, address, symbols)
